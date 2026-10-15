@@ -19,14 +19,106 @@
 
 本仓库没有携带签名证书。用 DevEco 的自动签名即可。未签名 HAP 可以在模拟器上安装，但部分系统能力仍依赖镜像。
 
-## 用 DevEco Studio 打开
+## 在 HarmonyOS 手机上真机测试
 
-1. 打开本仓库根目录（含 `build-profile.json5` 的那一层，不要只打开 `entry`）。
-2. 等待 Sync，或在终端执行 DevEco 自带的 `ohpm install`。
-3. `File > Project Structure > Signing Configs` 里勾选自动签名。
-4. 选择手机、平板或 2in1 运行配置，点击 Run。入口 Ability 是 `EntryAbility`，包名 `com.juanshu.pdf`，桌面名称是「卷舒 PDF」。
+下面按顺序做一遍，就能把「卷舒 PDF」装到 HarmonyOS 5 及以上的华为手机上。本工程的兼容 SDK 是 `5.0.0(12)`，请使用 DevEco Studio 5.0.0 Release 或更高版本，以及 HarmonyOS 5 及以上的手机。HarmonyOS 4 及更早系统不走这套调试方式。
 
-命令行（把路径换成自己的 DevEco 安装目录）：
+电脑建议：Windows 10/11 64 位、内存 16 GB；或 macOS 11 及以上。安装 SDK 和签名都需要能访问华为开发者站点。
+
+### 1. 安装 DevEco Studio
+
+1. 打开 [DevEco Studio 下载页](https://developer.huawei.com/consumer/cn/deveco-studio/)，进入下载中心，按系统选择 Windows 或 macOS 安装包。
+2. 运行安装程序，按向导装完。首次启动保持联网，让它下载 HarmonyOS SDK 和构建工具。
+3. 在 SDK 组件里确认已经安装 API 12 / HarmonyOS 5.0.0(12)。若向导只给了更高版本，同时勾选与本工程 `compatibleSdkVersion` 匹配的 5.0.0(12)。
+4. 打开 `Help > About`，确认版本不低于 5.0.0 Release。
+
+### 2. 克隆仓库
+
+```bash
+git clone https://github.com/porpezite/juanshu-pdf.git
+cd juanshu-pdf
+```
+
+已经有本地副本时，拉下 `main`，再切到你要测的分支。
+
+### 3. 用 DevEco 打开工程
+
+1. 启动 DevEco Studio，选择 **Open**，选中仓库根目录。根目录里能看到 `build-profile.json5`、`hvigorfile.ts`、`AppScope` 和 `entry`。
+2. 打开的是这一层，而不是单独的 `entry` 文件夹。
+3. 等待右下角 Sync 结束。依赖没拉下来时，用 DevEco 自带的 ohpm 在工程根目录执行 `ohpm install`。
+4. 工程同步成功后，左侧能看到 `entry` 和 `core` 两个模块。
+
+### 4. 手机打开开发者模式和 USB 调试
+
+请在机主的主空间里操作。子用户、隐私空间、学生模式或「坚盾守护模式」下，开发者选项和 USB 调试打不开。
+
+1. 打开手机 **设置**，搜索「关于本机」并进入。有的机型写的是「关于手机」。
+2. 找到 **软件版本**，连续快速点击 7 次。系统会提示剩余次数，然后询问是否开启开发者选项。
+3. 点确认。HarmonyOS 5 及以上会重启手机并打开开发者选项。有锁屏密码时，按提示输入。
+4. 重启后进入 **设置 > 系统 > 开发者选项**。也可以在设置里搜索「开发者选项」。
+5. 打开 **USB 调试**。第一次打开时，在确认框里点允许。
+
+日常不用调试时，可以关掉 USB 调试。
+
+### 5. 用数据线连接电脑
+
+1. 使用能传数据的 USB 线，接到电脑主机上的 USB 口。充电线和扩展坞经常让电脑看不到手机。
+2. 手机弹出 USB 用途时，按 HarmonyOS 5 的调试说明选择 **仅充电**。
+3. 手机弹出「允许 USB 调试」时，勾选 **始终允许使用这台计算机进行调试**，再点允许。
+4. 回到 DevEco Studio 顶部的设备下拉框，等待几秒，列表里应出现这台手机的型号。
+
+仍看不到手机时，在 DevEco 自带的终端里执行：
+
+```bash
+hdc list targets
+```
+
+正常时会打印一行设备序列号。打印 `[Empty]` 说明电脑还没连上手机，先看下面的「常见问题」。
+
+### 6. 用华为账号做自动签名
+
+仓库里没有证书。真机安装必须签名，调试用自动签名即可。
+
+1. 菜单打开 **File > Project Structure > Project > Signing Configs**。
+2. 勾选 **Automatically generate signature**（自动生成签名）。还没登录时，点 **Sign In**，用华为开发者账号登录。没有账号就按页面提示注册；需要切换团队时用 Team 下拉框。
+3. 保持联网，点 **Apply** 或 **OK**。DevEco 会按包名 `com.juanshu.pdf` 申请调试证书，并写进本机的 `build-profile.json5`。
+4. 这些证书、`.p12`、`.cer`、`.p7b` 和密码只留在你的电脑上，不要提交到 Git。
+
+自动签名需要本机时间接近北京时间。断网、多人共用同一套密钥，或要给开放能力配指纹时，再改用手动签名。本应用的相机权限不是受限 ACL，调试阶段用自动签名即可。
+
+### 7. 运行并安装
+
+1. 窗口上方的运行配置保持 **entry**，构建变体用 **debug**。debug 默认可调试；release 默认不可调试。
+2. 设备下拉框选中刚才连上的手机。
+3. 点绿色 **Run**。第一次会编译 `core` 和 `entry`，再把 HAP 装到手机。
+4. 安装完成后，手机会打开「卷舒 PDF」。入口 Ability 是 `EntryAbility`，包名是 `com.juanshu.pdf`。桌面上也能找到同名图标。
+
+装好后建议按这个顺序点一遍：
+
+1. 首页能看到四个工具和「最近文件」。点「新建」，应生成一份文稿并进入编辑页。
+2. 打开扫描，点「示例页」，拖动四角，选一个滤镜，再点「生成 PDF」。首页最近文件里应出现这份扫描件。
+3. 在编辑页加一处高亮或文字，点右上角「保存」。
+4. 打开「转换识别」。有 Core Vision Kit 的手机上，对扫描页点「识别本页」；系统没有该能力时，会提示识别不可用。
+5. 打开「文档」，搜索刚才的文件名，试一次重命名。第一次使用相机或相册时，在系统弹窗里允许权限。
+
+### 8. 常见问题
+
+| 现象 | 处理 |
+| --- | --- |
+| 设备列表是空的，`hdc list targets` 显示 `[Empty]` | 确认已经重启并进入开发者选项，USB 调试已打开，并且在手机上点了「允许」。换一根数据线和主机上的 USB 口。拔掉扩展坞。关掉电脑上的 VPN 后再插一次。仍没有序列号时，重启手机和 DevEco。 |
+| USB 调试是灰的，或找不到开发者选项 | 退出隐私空间和子用户，用机主主空间操作。关闭「坚盾守护模式」。HarmonyOS 5 要连点「软件版本」7 次并确认重启，连点「HarmonyOS 版本」是更早系统的入口。 |
+| 弹出允许调试后又马上断开 | USB 用途改成「仅充电」再授权一次。线只能充电、不能传数据时，换线。 |
+| Sync 失败，或提示找不到 SDK / API 12 | 在 DevEco 的 SDK Manager 里安装 HarmonyOS 5.0.0(12)，并确认 `build-profile.json5` 里的 `compatibleSdkVersion` 仍是 `5.0.0(12)`。企业网络需要在 DevEco 里配置代理。 |
+| 打开工程后没有 `entry` / `core`，或 Sync 报工程结构错误 | 关掉窗口，重新 Open 仓库根目录。根目录必须同时有 `build-profile.json5` 和 `entry`。 |
+| 签名失败，提示未登录、申请证书失败或时间无效 | 在 Signing Configs 里重新 Sign In。检查网络和系统时间。确认勾的是自动签名，并且包名仍是 `com.juanshu.pdf`。 |
+| 安装失败，提示签名不一致或 `install parse native so failed` / 签名不匹配 | 手机上先卸载旧的「卷舒 PDF」，再 Run 一次。换过华为账号或换过电脑后，旧调试证书和新证书对不上。 |
+| Run 按钮是灰的 | 先等 Sync 结束。设备没选中时，先让 `hdc list targets` 能看到序列号。运行配置选 `entry`。 |
+| 能安装，但相机、智能扫描或 OCR 没反应 | 在系统设置里给「卷舒 PDF」打开相机权限。文档扫描和文字识别依赖 HarmonyOS 5 及以上的系统能力；没有该能力时，应用会提示，扫描仍可用「示例页」和系统相机。 |
+| 命令行编译提示 `No signingConfig` | 只编译、不安装时这是预期提示，产物未签名，不能装到真机。真机请用上面的自动签名，再在 DevEco 里 Run。 |
+
+### 只编译、不安装到手机
+
+把路径换成自己的 DevEco 安装目录：
 
 ```bash
 export DEVECO_SDK_HOME=/path/to/DevEco-Studio/sdk
@@ -34,7 +126,7 @@ export DEVECO_SDK_HOME=/path/to/DevEco-Studio/sdk
 /path/to/DevEco-Studio/tools/hvigor/bin/hvigorw assembleHap --mode module -p product=default -p module=entry@default
 ```
 
-HAP 一般在 `entry/build` 下面。没有配置签名时，hvigor 会提示 `No signingConfig`，这是预期情况，产物是未签名包。
+HAP 一般在 `entry/build` 下面。没有签名配置时会出现 `No signingConfig`。要装到手机，请走上一节的自动签名和 Run。
 
 ## 不装 DevEco 时检查核心
 
