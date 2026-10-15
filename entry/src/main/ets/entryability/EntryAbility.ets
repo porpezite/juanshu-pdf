@@ -16,12 +16,12 @@ export default class EntryAbility extends UIAbility {
   onWindowStageCreate(windowStage: window.WindowStage): void {
     try {
       windowStage.getMainWindow().then((win: window.Window) => {
-        win.setWindowBackgroundColor('#F6F4EF');
+        win.setWindowBackgroundColor('#FFFFFF');
         win.setWindowSystemBarProperties({
-          statusBarColor: '#F6F4EF',
-          statusBarContentColor: '#1C1B19',
-          navigationBarColor: '#F6F4EF',
-          navigationBarContentColor: '#1C1B19'
+          statusBarColor: '#FFFFFF',
+          statusBarContentColor: '#182431',
+          navigationBarColor: '#FFFFFF',
+          navigationBarContentColor: '#182431'
         });
       });
     } catch (err) {

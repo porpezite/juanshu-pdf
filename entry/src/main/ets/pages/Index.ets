@@ -3,45 +3,121 @@ import { fileUri } from '@kit.CoreFileKit';
 import { uniformTypeDescriptor as utd } from '@kit.ArkData';
 import { systemShare } from '@kit.ShareKit';
 import { DocSummary } from 'juanshu_core';
-import { AppHost } from '../platform/AppHost';
-import { OfficialScanner } from '../components/OfficialScanner';
+import { BreakpointConstants } from '../common/BreakpointConstants';
+import { DocScanner } from '../components/DocScanner';
 import { toast } from '../components/Chrome';
+import { AppHost } from '../platform/AppHost';
 
 @Component
-struct ToolRow {
+struct NewsRow {
   label: string = '';
+  detail: string = '';
+  thumb: boolean = false;
   onTap: () => void = () => {
   };
 
   build() {
-    Row() {
-      Text(this.label)
-        .fontSize(16)
-        .fontColor('#1C1B19')
+    Column() {
+      Row() {
+        Column() {
+          Text(this.label)
+            .fontSize(16)
+            .fontWeight(FontWeight.Medium)
+            .fontColor('#182431')
+            .maxLines(2)
+            .textOverflow({ overflow: TextOverflow.Ellipsis })
+          if (this.detail.length > 0) {
+            Text(this.detail)
+              .fontSize(12)
+              .fontColor('#99182431')
+              .maxLines(2)
+              .margin({ top: 8 })
+          }
+        }
+        .alignItems(HorizontalAlign.Start)
         .layoutWeight(1)
+        .margin({ right: this.thumb ? 12 : 0 })
+
+        if (this.thumb) {
+          Image($r('app.media.app_icon'))
+            .width(96)
+            .height(72)
+            .borderRadius(8)
+            .objectFit(ImageFit.Cover)
+        }
+      }
+      .width('100%')
+      .alignItems(VerticalAlign.Center)
+      .padding({ left: 16, right: 16, top: 16, bottom: 16 })
+
+      Divider()
+        .strokeWidth(0.5)
+        .color('#E8E8E8')
+        .margin({ left: 16, right: 16 })
     }
     .width('100%')
-    .height(52)
-    .padding({ left: 16, right: 16 })
-    .backgroundColor('#FFFFFF')
+    .backgroundColor(Color.White)
     .onClick(() => {
       this.onTap();
     })
   }
 }
 
+@Component
+struct NewsFrame {
+  @Builder
+  defaultContent() {
+  }
+
+  @BuilderParam content: () => void = this.defaultContent;
+
+  build() {
+    GridRow({
+      columns: {
+        xs: BreakpointConstants.COLUMNS_SM,
+        sm: BreakpointConstants.COLUMNS_SM,
+        md: BreakpointConstants.COLUMNS_MD,
+        lg: BreakpointConstants.COLUMNS_LG
+      },
+      breakpoints: {
+        value: [BreakpointConstants.RANGE_SM, BreakpointConstants.RANGE_MD, BreakpointConstants.RANGE_LG],
+        reference: BreakpointsReference.WindowSize
+      }
+    }) {
+      GridCol({
+        span: {
+          xs: BreakpointConstants.COLUMNS_SM,
+          sm: BreakpointConstants.COLUMNS_SM,
+          md: BreakpointConstants.COLUMNS_MD,
+          lg: BreakpointConstants.SPAN_LG
+        },
+        offset: {
+          xs: 0,
+          sm: 0,
+          md: 0,
+          lg: BreakpointConstants.OFFSET_LG
+        }
+      }) {
+        this.content()
+      }
+      .width('100%')
+      .height('100%')
+    }
+    .width('100%')
+    .height('100%')
+    .backgroundColor(Color.White)
+  }
+}
+
 @Entry
 @Component
 struct Index {
-  @State section: number = 0;
+  @State currentIndex: number = 0;
+  @State docTab: number = 0;
   @State query: string = '';
   @State docs: DocSummary[] = [];
-  @State currentBreakpoint: string = 'sm';
-  @State shotLimit: number = 20;
-  @State scanEpoch: number = 0;
-  private stack: NavPathStack = new NavPathStack();
+  private navStack: NavPathStack = new NavPathStack();
   private tabsController: TabsController = new TabsController();
-  @State folders: string[] = ['扫描证件', '扫描书籍'];
 
   aboutToAppear(): void {
     this.reloadDocs();
@@ -51,571 +127,400 @@ struct Index {
     this.reloadDocs();
   }
 
+  @Builder
+  tabBarBuilder(title: string, index: number, selectedImg: ResourceStr, normalImg: ResourceStr) {
+    Column() {
+      Image(this.currentIndex === index ? selectedImg : normalImg)
+        .width(24)
+        .height(24)
+        .objectFit(ImageFit.Contain)
+      Text(title)
+        .fontSize(10)
+        .fontColor(this.currentIndex === index ? '#FF6B00' : '#99182431')
+        .margin({ top: 2 })
+    }
+    .width('100%')
+    .height('100%')
+    .justifyContent(FlexAlign.Center)
+  }
+
   build() {
-    GridRow({
-      columns: { xs: 4, sm: 4, md: 8, lg: 12 },
-      breakpoints: {
-        value: ['320vp', '600vp', '840vp'],
-        reference: BreakpointsReference.WindowSize
-      }
-    }) {
-      GridCol({ span: { xs: 4, sm: 4, md: 8, lg: 12 } }) {
-        if (this.isWide()) {
-          this.wideShell()
-        } else {
-          this.phoneTabs()
+    Navigation(this.navStack) {
+      Column() {
+        Tabs({ barPosition: BarPosition.End, controller: this.tabsController, index: this.currentIndex }) {
+          TabContent() {
+            this.docsPage()
+          }
+          .tabBar(this.tabBarBuilder('文档', 0, $r('app.media.ic_doc_selected'), $r('app.media.ic_doc')))
+
+          TabContent() {
+            this.toolsPage()
+          }
+          .tabBar(this.tabBarBuilder('工具', 1, $r('app.media.ic_tool_selected'), $r('app.media.ic_tool')))
+
+          TabContent() {
+            if (this.currentIndex === 2) {
+              DocScanner({
+                onSaved: () => {
+                  this.reloadDocs();
+                  this.openTab(0);
+                }
+              })
+                .width('100%')
+                .height('100%')
+            }
+          }
+          .tabBar(this.tabBarBuilder('扫描', 2, $r('app.media.ic_scan_selected'), $r('app.media.ic_scan')))
+
+          TabContent() {
+            this.minePage()
+          }
+          .tabBar(this.tabBarBuilder('我的', 3, $r('app.media.ic_mine_selected'), $r('app.media.ic_mine')))
         }
+        .barHeight(56)
+        .barMode(BarMode.Fixed)
+        .scrollable(false)
+        .barBackgroundColor(Color.White)
+        .width('100%')
+        .height('100%')
+        .backgroundColor(Color.White)
+        .onChange((index: number) => {
+          this.currentIndex = index;
+        })
       }
       .width('100%')
       .height('100%')
     }
+    .hideTitleBar(true)
+    .mode(NavigationMode.Stack)
     .width('100%')
     .height('100%')
-    .backgroundColor('#F6F4EF')
-    .onBreakpointChange((breakpoint: string) => {
-      this.currentBreakpoint = breakpoint;
-      if (this.isWide() && this.stack.size() === 0) {
-        this.stack.pushPathByName(this.sectionName(), '');
-      }
-    })
+    .backgroundColor(Color.White)
   }
 
   @Builder
-  phoneTabs() {
-    Tabs({ barPosition: BarPosition.End, controller: this.tabsController, index: this.section }) {
-      TabContent() {
-        this.docsPane()
-      }
-      .tabBar(this.plainTab('文档', 0))
-
-      TabContent() {
-        this.toolsPane()
-      }
-      .tabBar(this.plainTab('工具', 1))
-
-      TabContent() {
-        if (this.section === 2) {
-          this.scannerPane()
-        }
-      }
-      .tabBar(this.scanTab())
-
-      TabContent() {
-        this.minePane()
-      }
-      .tabBar(this.plainTab('我的', 3))
-    }
-    .barMode(BarMode.Fixed)
-    .barHeight(64)
-    .width('100%')
-    .height('100%')
-    .backgroundColor('#F6F4EF')
-    .onChange((index: number) => {
-      this.section = index;
-    })
-  }
-
-  @Builder
-  wideShell() {
-    Navigation(this.stack) {
+  docsPage() {
+    NewsFrame() {
       Column() {
-        Text('卷舒 PDF')
-          .fontSize(20)
-          .fontWeight(FontWeight.Bold)
-          .fontColor('#1C1B19')
-          .width('100%')
-          .padding({ left: 16, top: 20, bottom: 12 })
-        List() {
-          this.sideRow('文档', 0)
-          this.sideRow('工具', 1)
-          this.sideRow('扫描', 2)
-          this.sideRow('我的', 3)
+        Row() {
+          Text('文档')
+            .fontSize(26)
+            .fontWeight(FontWeight.Bold)
+            .fontColor('#182431')
+            .layoutWeight(1)
+          Text('导入')
+            .fontSize(16)
+            .fontColor('#182431')
+            .onClick(() => {
+              this.importDoc();
+            })
         }
         .width('100%')
-        .layoutWeight(1)
-        .scrollBar(BarState.Off)
+        .alignItems(VerticalAlign.Center)
+        .padding({ left: 16, right: 16, top: 16, bottom: 12 })
+
+        Row() {
+          this.subTab('最近', 0)
+          this.subTab('文件夹', 1)
+        }
+        .width('100%')
+        .justifyContent(FlexAlign.Start)
+        .padding({ left: 16, right: 16, bottom: 8 })
+
+        Row() {
+          Search({ value: this.query, placeholder: '搜索' })
+            .layoutWeight(1)
+            .height(40)
+            .onChange((value: string) => {
+              this.query = value;
+              this.reloadDocs();
+            })
+            .onSubmit((value: string) => {
+              this.query = value;
+              this.reloadDocs();
+            })
+        }
+        .width('100%')
+        .padding({ left: 16, right: 16, bottom: 8 })
+
+        if (this.docTab === 0) {
+          this.recentList()
+        } else {
+          this.folderList()
+        }
       }
       .width('100%')
       .height('100%')
-      .backgroundColor('#FFFFFF')
+      .backgroundColor(Color.White)
     }
-    .mode(NavigationMode.Split)
-    .navBarWidth(240)
-    .hideTitleBar(true)
-    .navDestination(this.destination)
-    .width('100%')
-    .height('100%')
-    .backgroundColor('#F6F4EF')
   }
 
   @Builder
-  sideRow(label: string, index: number) {
-    ListItem() {
+  subTab(label: string, index: number) {
+    Column() {
       Text(label)
         .fontSize(16)
-        .fontColor(this.section === index ? '#1F6B4A' : '#1C1B19')
-        .fontWeight(this.section === index ? FontWeight.Medium : FontWeight.Normal)
-        .width('100%')
-        .height(48)
-        .padding({ left: 16, right: 16 })
+        .fontWeight(this.docTab === index ? FontWeight.Bold : FontWeight.Normal)
+        .fontColor(this.docTab === index ? '#182431' : '#99182431')
+      Row()
+        .width(24)
+        .height(2)
+        .margin({ top: 6 })
+        .borderRadius(1)
+        .backgroundColor(this.docTab === index ? '#FF6B00' : Color.Transparent)
     }
+    .margin({ right: 28 })
+    .alignItems(HorizontalAlign.Center)
     .onClick(() => {
-      this.openSection(label, index);
+      this.docTab = index;
     })
   }
 
   @Builder
-  destination(name: string) {
-    if (name === '工具') {
-      NavDestination() {
-        this.toolsPane()
-      }
-      .hideTitleBar(true)
-    } else if (name === '扫描') {
-      NavDestination() {
-        this.scannerPane()
-      }
-      .hideTitleBar(true)
-    } else if (name === '我的') {
-      NavDestination() {
-        this.minePane()
-      }
-      .hideTitleBar(true)
+  recentList() {
+    if (this.docs.length === 0) {
+      Text('最近还没有文档')
+        .fontSize(14)
+        .fontColor('#99182431')
+        .width('100%')
+        .padding({ left: 16, top: 24 })
     } else {
-      NavDestination() {
-        this.docsPane()
-      }
-      .hideTitleBar(true)
-    }
-  }
-
-  @Builder
-  plainTab(label: string, index: number) {
-    Column() {
-      Text(label)
-        .fontSize(12)
-        .fontColor(this.section === index ? '#1F6B4A' : '#6E6A62')
-        .fontWeight(this.section === index ? FontWeight.Medium : FontWeight.Normal)
-    }
-    .width('100%')
-    .height('100%')
-    .justifyContent(FlexAlign.Center)
-  }
-
-  @Builder
-  scanTab() {
-    Column() {
-      Column() {
-        Text('扫描')
-          .fontSize(12)
-          .fontWeight(FontWeight.Medium)
-          .fontColor('#FFFFFF')
-      }
-      .width(48)
-      .height(48)
-      .borderRadius(24)
-      .justifyContent(FlexAlign.Center)
-      .backgroundColor('#1F6B4A')
-    }
-    .width('100%')
-    .height('100%')
-    .justifyContent(FlexAlign.Center)
-  }
-
-  @Builder
-  docsPane() {
-    Column() {
-      Row() {
-        Search({ value: this.query, placeholder: '文档' })
-          .layoutWeight(1)
-          .height(40)
-          .onChange((value: string) => {
-            this.query = value;
-            this.reloadDocs();
-          })
-        Button('导入')
-          .width(72)
-          .height(40)
-          .margin({ left: 8 })
-          .fontSize(14)
-          .backgroundColor('#1F6B4A')
-          .fontColor('#FFFFFF')
-          .onClick(() => {
-            this.importDoc();
-          })
-      }
-      .width('100%')
-      .padding({ left: 16, right: 16, top: 12 })
-
-      Text('文件夹')
-        .fontSize(13)
-        .fontColor('#6E6A62')
-        .width('100%')
-        .margin({ left: 16, top: 16, bottom: 8 })
-
-      List({ space: 12 }) {
-        ForEach(this.folders, (name: string) => {
+      List() {
+        ForEach(this.docs, (item: DocSummary) => {
           ListItem() {
-            Text(name)
-              .fontSize(15)
-              .fontColor('#1C1B19')
-              .width(132)
-              .height(72)
-              .padding(12)
-              .backgroundColor('#FFFFFF')
-              .borderRadius(12)
-          }
-          .onClick(() => {
-            this.openFolder(name);
-          })
-        }, (name: string) => name)
-      }
-      .listDirection(Axis.Horizontal)
-      .width('100%')
-      .height(88)
-      .margin({ left: 16 })
-      .scrollBar(BarState.Off)
-
-      Text('最近')
-        .fontSize(13)
-        .fontColor('#6E6A62')
-        .width('100%')
-        .margin({ left: 16, top: 8, bottom: 8 })
-
-      if (this.docs.length === 0) {
-        Text('最近还没有文档')
-          .fontSize(15)
-          .fontColor('#1C1B19')
-          .width('100%')
-          .padding({ left: 16, top: 12 })
-      } else {
-        List({ space: 8 }) {
-          ForEach(this.docs, (item: DocSummary) => {
-            ListItem() {
-              this.docRow(item)
-            }
-            .onClick(() => {
-              this.openDoc(item.id);
+            NewsRow({
+              label: item.name,
+              detail: this.formatWhen(item.updatedAt) + '  ' + item.pageCount + ' 页',
+              thumb: true,
+              onTap: () => {
+                this.openDoc(item.id);
+              }
             })
-          }, (item: DocSummary) => item.id + ':' + item.updatedAt)
+          }
+        }, (item: DocSummary) => item.id + ':' + item.updatedAt)
+      }
+      .layoutWeight(1)
+      .width('100%')
+      .scrollBar(BarState.Off)
+    }
+  }
+
+  @Builder
+  folderList() {
+    List() {
+      ForEach(this.visibleFolders(), (name: string) => {
+        ListItem() {
+          NewsRow({
+            label: name,
+            thumb: true,
+            onTap: () => {
+              this.openTab(2);
+            }
+          })
+        }
+      }, (name: string) => name)
+    }
+    .layoutWeight(1)
+    .width('100%')
+    .scrollBar(BarState.Off)
+  }
+
+  @Builder
+  toolsPage() {
+    NewsFrame() {
+      Column() {
+        Text('工具')
+          .fontSize(26)
+          .fontWeight(FontWeight.Bold)
+          .fontColor('#182431')
+          .width('100%')
+          .padding({ left: 16, right: 16, top: 16, bottom: 8 })
+
+        List() {
+          ListItemGroup({ header: this.headRecognize }) {
+            ListItem() {
+              NewsRow({
+                label: '提取文字',
+                onTap: () => {
+                  this.openConvert('text');
+                }
+              })
+            }
+            ListItem() {
+              NewsRow({
+                label: '扫描证件',
+                onTap: () => {
+                  this.openTab(2);
+                }
+              })
+            }
+            ListItem() {
+              NewsRow({
+                label: '扫描书籍',
+                onTap: () => {
+                  this.openTab(2);
+                }
+              })
+            }
+          }
+          ListItemGroup({ header: this.headPdf }) {
+            ListItem() {
+              NewsRow({
+                label: '合并',
+                onTap: () => {
+                  this.openManage('merge');
+                }
+              })
+            }
+            ListItem() {
+              NewsRow({
+                label: '拆分',
+                onTap: () => {
+                  this.openManage('split');
+                }
+              })
+            }
+            ListItem() {
+              NewsRow({
+                label: '压缩',
+                onTap: () => {
+                  this.openManage('compress');
+                }
+              })
+            }
+            ListItem() {
+              NewsRow({
+                label: '页序',
+                onTap: () => {
+                  this.openManage('order');
+                }
+              })
+            }
+          }
+          ListItemGroup({ header: this.headExport }) {
+            ListItem() {
+              NewsRow({
+                label: '转 Word',
+                onTap: () => {
+                  this.openConvert('word');
+                }
+              })
+            }
+            ListItem() {
+              NewsRow({
+                label: '转图片',
+                onTap: () => {
+                  this.openConvert('image');
+                }
+              })
+            }
+            ListItem() {
+              NewsRow({
+                label: '分享',
+                onTap: () => {
+                  this.shareRecent();
+                }
+              })
+            }
+          }
         }
         .layoutWeight(1)
         .width('100%')
-        .padding({ left: 16, right: 16 })
         .scrollBar(BarState.Off)
       }
+      .width('100%')
+      .height('100%')
+      .backgroundColor(Color.White)
     }
-    .width('100%')
-    .height('100%')
-    .backgroundColor('#F6F4EF')
-  }
-
-  @Builder
-  docRow(item: DocSummary) {
-    Row() {
-      Column() {
-        Text(String(item.pageCount))
-          .fontSize(16)
-          .fontWeight(FontWeight.Medium)
-          .fontColor('#1F6B4A')
-        Text('页')
-          .fontSize(11)
-          .fontColor('#6E6A62')
-          .margin({ top: 2 })
-      }
-      .width(52)
-      .height(68)
-      .borderRadius(8)
-      .justifyContent(FlexAlign.Center)
-      .backgroundColor('#E7F2EC')
-
-      Column() {
-        Text(item.name)
-          .fontSize(16)
-          .fontColor('#1C1B19')
-          .maxLines(1)
-          .textOverflow({ overflow: TextOverflow.Ellipsis })
-        Text(item.pageCount + ' 页')
-          .fontSize(12)
-          .fontColor('#6E6A62')
-          .margin({ top: 4 })
-        Text(this.formatWhen(item.updatedAt))
-          .fontSize(12)
-          .fontColor('#6E6A62')
-          .margin({ top: 2 })
-      }
-      .alignItems(HorizontalAlign.Start)
-      .layoutWeight(1)
-      .margin({ left: 12 })
-    }
-    .width('100%')
-    .padding(12)
-    .backgroundColor('#FFFFFF')
-    .borderRadius(16)
-  }
-
-  @Builder
-  toolsPane() {
-    List() {
-      ListItemGroup({ header: this.headRecognize }) {
-        ListItem() {
-          ToolRow({
-            label: '提取文字',
-            onTap: () => {
-              this.openConvert('text');
-            }
-          })
-        }
-        ListItem() {
-          ToolRow({
-            label: '扫描证件',
-            onTap: () => {
-              this.openIdScan();
-            }
-          })
-        }
-        ListItem() {
-          ToolRow({
-            label: '扫描书籍',
-            onTap: () => {
-              this.openBookScan();
-            }
-          })
-        }
-      }
-      ListItemGroup({ header: this.headPdf }) {
-        ListItem() {
-          ToolRow({
-            label: '合并',
-            onTap: () => {
-              this.openManage('merge');
-            }
-          })
-        }
-        ListItem() {
-          ToolRow({
-            label: '拆分',
-            onTap: () => {
-              this.openManage('split');
-            }
-          })
-        }
-        ListItem() {
-          ToolRow({
-            label: '压缩',
-            onTap: () => {
-              this.openManage('compress');
-            }
-          })
-        }
-        ListItem() {
-          ToolRow({
-            label: '页序',
-            onTap: () => {
-              this.openManage('order');
-            }
-          })
-        }
-      }
-      ListItemGroup({ header: this.headExport }) {
-        ListItem() {
-          ToolRow({
-            label: '转 Word',
-            onTap: () => {
-              this.openConvert('word');
-            }
-          })
-        }
-        ListItem() {
-          ToolRow({
-            label: '转图片',
-            onTap: () => {
-              this.openConvert('image');
-            }
-          })
-        }
-        ListItem() {
-          ToolRow({
-            label: '分享',
-            onTap: () => {
-              this.shareRecent();
-            }
-          })
-        }
-      }
-    }
-    .width('100%')
-    .height('100%')
-    .padding({ bottom: 16 })
-    .backgroundColor('#F6F4EF')
-    .scrollBar(BarState.Off)
   }
 
   @Builder
   headRecognize() {
     Text('扫描与识别')
-      .fontSize(13)
-      .fontColor('#6E6A62')
+      .fontSize(14)
+      .fontColor('#99182431')
       .width('100%')
-      .padding({ left: 16, top: 16, bottom: 8 })
+      .padding({ left: 16, top: 16, bottom: 4 })
   }
 
   @Builder
   headPdf() {
     Text('PDF处理')
-      .fontSize(13)
-      .fontColor('#6E6A62')
+      .fontSize(14)
+      .fontColor('#99182431')
       .width('100%')
-      .padding({ left: 16, top: 16, bottom: 8 })
+      .padding({ left: 16, top: 16, bottom: 4 })
   }
 
   @Builder
   headExport() {
     Text('转换导出')
-      .fontSize(13)
-      .fontColor('#6E6A62')
+      .fontSize(14)
+      .fontColor('#99182431')
       .width('100%')
-      .padding({ left: 16, top: 16, bottom: 8 })
+      .padding({ left: 16, top: 16, bottom: 4 })
   }
 
   @Builder
-  scannerPane() {
-    OfficialScanner({
-      shotLimit: this.shotLimit,
-      onSaved: () => {
-        this.reloadDocs();
-        this.openSection('文档', 0);
+  minePage() {
+    NewsFrame() {
+      Column() {
+        Text('我的')
+          .fontSize(26)
+          .fontWeight(FontWeight.Bold)
+          .fontColor('#182431')
+          .width('100%')
+          .padding({ left: 16, right: 16, top: 16, bottom: 8 })
+
+        List() {
+          ListItem() {
+            NewsRow({
+              label: '本地优先',
+              detail: '文档保存在这台设备上，打开和扫描不要求上传。'
+            })
+          }
+          ListItem() {
+            NewsRow({
+              label: 'Free',
+              detail: '当前方案'
+            })
+          }
+          ListItem() {
+            NewsRow({
+              label: '取消订阅',
+              onTap: () => {
+                toast('当前是 Free，没有需要取消的订阅。');
+              }
+            })
+          }
+        }
+        .layoutWeight(1)
+        .width('100%')
+        .scrollBar(BarState.Off)
       }
-    })
-      .key('scan' + this.scanEpoch)
       .width('100%')
       .height('100%')
+      .backgroundColor(Color.White)
+    }
   }
 
-  @Builder
-  minePane() {
-    Column() {
-      Text('卷舒 PDF')
-        .fontSize(22)
-        .fontWeight(FontWeight.Bold)
-        .fontColor('#1C1B19')
-        .width('100%')
-        .margin({ bottom: 12 })
-      Row() {
-        this.planCard('Free', true)
-        this.planCard('Plus', false)
-        this.planCard('Pro', false)
-      }
-      .width('100%')
-      .margin({ bottom: 16 })
-
-      List() {
-        ListItem() {
-          Column() {
-            Text('本地优先')
-              .fontSize(16)
-              .fontColor('#1C1B19')
-              .width('100%')
-            Text('文档保存在这台设备上，打开和扫描不要求上传。')
-              .fontSize(13)
-              .fontColor('#6E6A62')
-              .width('100%')
-              .margin({ top: 6 })
-          }
-          .alignItems(HorizontalAlign.Start)
-          .width('100%')
-          .padding(16)
-          .backgroundColor('#FFFFFF')
-          .borderRadius(16)
-        }
-        ListItem() {
-          Text('取消订阅')
-            .fontSize(16)
-            .fontColor('#1C1B19')
-            .width('100%')
-            .padding(16)
-            .margin({ top: 8 })
-            .backgroundColor('#FFFFFF')
-            .borderRadius(16)
-            .onClick(() => {
-              toast('当前是 Free，没有需要取消的订阅。');
-            })
-        }
-      }
-      .layoutWeight(1)
-      .width('100%')
-      .scrollBar(BarState.Off)
-    }
-    .width('100%')
-    .height('100%')
-    .padding(16)
-    .backgroundColor('#F6F4EF')
-  }
-
-  @Builder
-  planCard(name: string, current: boolean) {
-    Text(name)
-      .fontSize(14)
-      .fontWeight(current ? FontWeight.Medium : FontWeight.Normal)
-      .fontColor(current ? '#FFFFFF' : '#1C1B19')
-      .textAlign(TextAlign.Center)
-      .layoutWeight(1)
-      .height(44)
-      .margin({ right: 8 })
-      .borderRadius(12)
-      .backgroundColor(current ? '#1F6B4A' : '#FFFFFF')
-  }
-
-  private isWide(): boolean {
-    if (this.currentBreakpoint === 'xs' || this.currentBreakpoint === 'sm') {
-      return false;
-    }
-    return true;
-  }
-
-  private sectionName(): string {
-    if (this.section === 1) {
-      return '工具';
-    }
-    if (this.section === 2) {
-      return '扫描';
-    }
-    if (this.section === 3) {
-      return '我的';
-    }
-    return '文档';
-  }
-
-  private openSection(name: string, index: number): void {
-    this.section = index;
-    if (this.isWide()) {
-      if (this.stack.size() > 0) {
-        this.stack.clear();
-      }
-      this.stack.pushPathByName(name, '');
-      return;
-    }
+  private openTab(index: number): void {
+    this.currentIndex = index;
     this.tabsController.changeIndex(index);
   }
 
-  private openFolder(name: string): void {
-    if (name === '扫描书籍') {
-      this.openBookScan();
-      return;
+  private visibleFolders(): string[] {
+    const names: string[] = ['扫描证件', '扫描书籍'];
+    if (this.query.length === 0) {
+      return names;
     }
-    this.openIdScan();
-  }
-
-  private openIdScan(): void {
-    this.shotLimit = 2;
-    this.scanEpoch = this.scanEpoch + 1;
-    this.openSection('扫描', 2);
-  }
-
-  private openBookScan(): void {
-    this.shotLimit = 20;
-    this.scanEpoch = this.scanEpoch + 1;
-    this.openSection('扫描', 2);
+    const matched: string[] = [];
+    for (let i = 0; i < names.length; i++) {
+      if (names[i].indexOf(this.query) >= 0) {
+        matched.push(names[i]);
+      }
+    }
+    return matched;
   }
 
   private reloadDocs(): void {
@@ -676,8 +581,7 @@ struct Index {
 
   private formatWhen(ms: number): string {
     const date = new Date(ms);
-    return date.getFullYear() + '-' + this.two(date.getMonth() + 1) + '-' + this.two(date.getDate()) +
-      ' ' + this.two(date.getHours()) + ':' + this.two(date.getMinutes());
+    return date.getFullYear() + '-' + this.two(date.getMonth() + 1) + '-' + this.two(date.getDate());
   }
 
   private two(value: number): string {

@@ -74,9 +74,9 @@ core (HAR, juanshu_core)
 
 | 页面 | 路径 | 职责 |
 | --- | --- | --- |
-| 首页 | `pages/Index` | 手机底部标签：文档、工具、扫描、我的。宽屏用 Navigation 分栏 |
-| 扫描 | `pages/ScanPage` | 全屏 Vision Kit `DocumentScanner`，默认原图滤镜 |
-| 编辑 | `pages/EditPage` | 预览、批注、签名、翻页 |
+| 首页 | `pages/Index` | `Navigation` + 底部 `Tabs`：文档、工具、扫描、我的。大屏内容用 `GridRow` |
+| 扫描 | `pages/ScanPage` | 全屏 Vision Kit `DocumentScanner`，配置同官方 DocDemoPage |
+| 编辑 | `pages/EditPage` | PDF Kit `PdfView`，按宽度适配并可滚动 |
 | 转换识别 | `pages/ConvertPage` | OCR、导出文字和图片、反向生成 PDF |
 | 文档 | `pages/ManagePage` | 搜索、导入、合并、拆分、旋转、压缩 |
 

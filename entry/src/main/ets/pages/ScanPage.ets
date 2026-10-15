@@ -1,19 +1,16 @@
 import { router } from '@kit.ArkUI';
-import { OfficialScanner } from '../components/OfficialScanner';
+import { DocScanner } from '../components/DocScanner';
 
 @Entry
 @Component
 struct ScanPage {
   build() {
-    Column() {
-      OfficialScanner({
-        shotLimit: 20,
-        onSaved: () => {
-          router.back();
-        }
-      })
-    }
-    .width('100%')
-    .height('100%')
+    DocScanner({
+      onSaved: () => {
+        router.back();
+      }
+    })
+      .width('100%')
+      .height('100%')
   }
 }
