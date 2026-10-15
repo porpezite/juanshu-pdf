@@ -22,6 +22,42 @@ export async function fromPixelMap(pixel: image.PixelMap): Promise<RgbaImage> {
   return new RgbaImage(width, height, new Uint8Array(buffer));
 }
 
+/** Camera Kit 的 photo.main 是 Image，不是 PixelMap。JPEG 组件解码后再读像素。 */
+export async function fromCameraImage(main: image.Image): Promise<RgbaImage | null> {
+  let source: image.ImageSource | null = null;
+  let pixel: image.PixelMap | null = null;
+  try {
+    const component: image.Component = await main.getComponent(image.ComponentType.JPEG);
+    source = image.createImageSource(component.byteBuffer);
+    const decoding: image.DecodingOptions = {
+      editable: false,
+      desiredPixelFormat: image.PixelMapFormat.RGBA_8888
+    };
+    const decoded: image.PixelMap = await source.createPixelMap(decoding);
+    pixel = decoded;
+    return await fromPixelMap(decoded);
+  } catch (err) {
+    return null;
+  } finally {
+    if (pixel !== null) {
+      try {
+        await pixel.release();
+      } catch (releaseErr) {
+      }
+    }
+    if (source !== null) {
+      try {
+        await source.release();
+      } catch (releaseErr) {
+      }
+    }
+    try {
+      await main.release();
+    } catch (releaseErr) {
+    }
+  }
+}
+
 export async function readImageUri(uri: string): Promise<RgbaImage | null> {
   let file: fileIo.File | null = null;
   try {
@@ -39,7 +75,10 @@ export async function readImageUri(uri: string): Promise<RgbaImage | null> {
     return null;
   } finally {
     if (file !== null) {
-      fileIo.closeSync(file);
+      try {
+        fileIo.closeSync(file);
+      } catch (closeErr) {
+      }
     }
   }
 }
@@ -56,7 +95,10 @@ export function readRawFile(uri: string): Uint8Array | null {
     return null;
   } finally {
     if (file !== null) {
-      fileIo.closeSync(file);
+      try {
+        fileIo.closeSync(file);
+      } catch (closeErr) {
+      }
     }
   }
 }

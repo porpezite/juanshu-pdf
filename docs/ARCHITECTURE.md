@@ -84,4 +84,4 @@ core (HAR, juanshu_core)
 
 ## 构建形态
 
-Stage 模型，`modelVersion` 5.0.0，API 12（`5.0.0(12)`）。`core` 是 HAR，`entry` 是 HAP。包名 `com.juanshu.pdf`。设备类型是 phone、tablet、2in1。签名不进仓库。
+Stage 模型，hvigor `modelVersion` 26.0.0，HarmonyOS SDK `26.0.0`（`compileSdkVersion` / `compatibleSdkVersion` / `targetSdkVersion`）。`core` 是 HAR，`entry` 是 HAP。包名 `com.juanshu.pdf`。设备类型是 phone、tablet、2in1。签名不进仓库。

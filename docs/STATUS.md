@@ -13,9 +13,10 @@
   - 中文文本写入 PDF（`STSong-Light`）
   - 文件索引、搜索、最近使用、页码范围、OCR 行框阅读顺序
 - 平台端口：`FilePort`、`NativePdfPort`、`OcrPort`、`CapturePort`。
+- 工程 SDK 为 HarmonyOS `26.0.0`（`compileSdkVersion` / `compatibleSdkVersion` / `targetSdkVersion`）。包名 `com.juanshu.pdf`。
 - 鸿蒙适配：
   - PDF Kit：打开、合并、拆分、删除、移动、旋转、批注、加文字、转图片
-  - Camera Kit：`cameraPicker` 和应用内 `CameraManager` 取景
+  - Camera Kit：`cameraPicker` 和应用内 `CameraManager` 取景。拍照结果 `photo.main` 是 `image.Image`，先取 JPEG 再解码成像素。
   - 相册 `PhotoViewPicker`，文件选择器导入 PDF
   - Vision Kit `DocumentScanner`（设备有该能力时）
   - Core Vision Kit `textRecognition`（中英文等系统支持的语言）

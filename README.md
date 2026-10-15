@@ -13,15 +13,15 @@
 
 ## 环境
 
-- DevEco Studio 5.0.0 Release 或更高
-- HarmonyOS SDK 5.0.0(12)，`compatibleSdkVersion` / `targetSdkVersion` 均为 `5.0.0(12)`
+- DevEco Studio，并安装 HarmonyOS SDK 26.0.0（apiVersion 26，例如 26.0.0.105）
+- `compileSdkVersion`、`compatibleSdkVersion`、`targetSdkVersion` 均为 `26.0.0`
 - 手机、平板或 2in1。相机、文档扫描、OCR 和 PDF Kit 需要真机或带对应系统能力的模拟器
 
 本仓库没有携带签名证书。用 DevEco 的自动签名即可。未签名 HAP 可以在模拟器上安装，但部分系统能力仍依赖镜像。
 
 ## 在 HarmonyOS 手机上真机测试
 
-下面按顺序做一遍，就能把「卷舒 PDF」装到 HarmonyOS 5 及以上的华为手机上。本工程的兼容 SDK 是 `5.0.0(12)`，请使用 DevEco Studio 5.0.0 Release 或更高版本，以及 HarmonyOS 5 及以上的手机。HarmonyOS 4 及更早系统不走这套调试方式。
+下面按顺序做一遍，就能把「卷舒 PDF」装到系统版本达到 HarmonyOS SDK 26.0.0 的华为手机上。本工程的 `compatibleSdkVersion` 是 `26.0.0`，请使用带 HarmonyOS SDK 26.0.0 的 DevEco Studio。低于该版本的系统装不上这个 HAP。
 
 电脑建议：Windows 10/11 64 位、内存 16 GB；或 macOS 11 及以上。安装 SDK 和签名都需要能访问华为开发者站点。
 
@@ -29,8 +29,8 @@
 
 1. 打开 [DevEco Studio 下载页](https://developer.huawei.com/consumer/cn/deveco-studio/)，进入下载中心，按系统选择 Windows 或 macOS 安装包。
 2. 运行安装程序，按向导装完。首次启动保持联网，让它下载 HarmonyOS SDK 和构建工具。
-3. 在 SDK 组件里确认已经安装 API 12 / HarmonyOS 5.0.0(12)。若向导只给了更高版本，同时勾选与本工程 `compatibleSdkVersion` 匹配的 5.0.0(12)。
-4. 打开 `Help > About`，确认版本不低于 5.0.0 Release。
+3. 在 SDK 组件里确认已经安装 HarmonyOS SDK 26.0.0（apiVersion 26）。本工程的 `compatibleSdkVersion` 就是 `26.0.0`。
+4. 打开 `Help > About`，确认带的是 HarmonyOS SDK 26.0.0。
 
 ### 2. 克隆仓库
 
@@ -108,12 +108,12 @@ hdc list targets
 | 设备列表是空的，`hdc list targets` 显示 `[Empty]` | 确认已经重启并进入开发者选项，USB 调试已打开，并且在手机上点了「允许」。换一根数据线和主机上的 USB 口。拔掉扩展坞。关掉电脑上的 VPN 后再插一次。仍没有序列号时，重启手机和 DevEco。 |
 | USB 调试是灰的，或找不到开发者选项 | 退出隐私空间和子用户，用机主主空间操作。关闭「坚盾守护模式」。HarmonyOS 5 要连点「软件版本」7 次并确认重启，连点「HarmonyOS 版本」是更早系统的入口。 |
 | 弹出允许调试后又马上断开 | USB 用途改成「仅充电」再授权一次。线只能充电、不能传数据时，换线。 |
-| Sync 失败，或提示找不到 SDK / API 12 | 在 DevEco 的 SDK Manager 里安装 HarmonyOS 5.0.0(12)，并确认 `build-profile.json5` 里的 `compatibleSdkVersion` 仍是 `5.0.0(12)`。企业网络需要在 DevEco 里配置代理。 |
+| Sync 失败，或提示找不到 SDK 26.0.0 | 在 DevEco 的 SDK Manager 里安装 HarmonyOS SDK 26.0.0，并确认 `build-profile.json5` 里的 `compileSdkVersion`、`compatibleSdkVersion`、`targetSdkVersion` 都是 `26.0.0`。企业网络需要在 DevEco 里配置代理。 |
 | 打开工程后没有 `entry` / `core`，或 Sync 报工程结构错误 | 关掉窗口，重新 Open 仓库根目录。根目录必须同时有 `build-profile.json5` 和 `entry`。 |
 | 签名失败，提示未登录、申请证书失败或时间无效 | 在 Signing Configs 里重新 Sign In。检查网络和系统时间。确认勾的是自动签名，并且包名仍是 `com.juanshu.pdf`。 |
 | 安装失败，提示签名不一致或 `install parse native so failed` / 签名不匹配 | 手机上先卸载旧的「卷舒 PDF」，再 Run 一次。换过华为账号或换过电脑后，旧调试证书和新证书对不上。 |
 | Run 按钮是灰的 | 先等 Sync 结束。设备没选中时，先让 `hdc list targets` 能看到序列号。运行配置选 `entry`。 |
-| 能安装，但相机、智能扫描或 OCR 没反应 | 在系统设置里给「卷舒 PDF」打开相机权限。文档扫描和文字识别依赖 HarmonyOS 5 及以上的系统能力；没有该能力时，应用会提示，扫描仍可用「示例页」和系统相机。 |
+| 能安装，但相机、智能扫描或 OCR 没反应 | 在系统设置里给「卷舒 PDF」打开相机权限。文档扫描和文字识别依赖系统能力；没有该能力时，应用会提示，扫描仍可用「示例页」和系统相机。 |
 | 命令行编译提示 `No signingConfig` | 只编译、不安装时这是预期提示，产物未签名，不能装到真机。真机请用上面的自动签名，再在 DevEco 里 Run。 |
 
 ### 只编译、不安装到手机

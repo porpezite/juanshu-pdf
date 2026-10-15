@@ -3,7 +3,7 @@ import { camera, cameraPicker } from '@kit.CameraKit';
 import { photoAccessHelper } from '@kit.MediaLibraryKit';
 import { BusinessError } from '@kit.BasicServicesKit';
 import { CapturePort, RgbaImage } from 'juanshu_core';
-import { fromPixelMap, readImageUri, readRawFile } from './PixelBridge';
+import { fromCameraImage, readImageUri, readRawFile } from './PixelBridge';
 
 export class HarmonyCapture implements CapturePort {
   private context: common.UIAbilityContext | null = null;
@@ -159,7 +159,7 @@ export class HarmonyCameraSession {
       done(null);
       return;
     }
-    fromPixelMap(photo.main).then((image: RgbaImage) => {
+    fromCameraImage(photo.main).then((image: RgbaImage | null) => {
       done(image);
     }).catch(() => {
       done(null);
