@@ -39,10 +39,10 @@ export struct DocScanner {
       DocumentScanner({
         scannerConfig: this.docScanConfig,
         onResult: (code: number, saveType: SaveOption, uris: string[]) => {
-          hilog.info(0x0001, TAG, 'result code: ' + code + ', save: ' + saveType);
-          for (let i = 0; i < uris.length; i++) {
-            hilog.info(0x0001, TAG, 'uri: ' + uris[i]);
-          }
+          hilog.info(0x0001, TAG, `result code: ${code}, save: ${saveType}`);
+          uris.forEach((uriString: string) => {
+            hilog.info(0x0001, TAG, `uri: ${uriString}`);
+          });
           this.docImageUris = uris;
           this.keep(uris, saveType);
         }

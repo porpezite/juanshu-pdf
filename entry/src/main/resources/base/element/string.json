@@ -15,6 +15,14 @@
     {
       "name": "camera_reason",
       "value": "用于拍摄文档并生成扫描件"
+    },
+    {
+      "name": "font_size_12",
+      "value": "12fp"
+    },
+    {
+      "name": "margin_xs",
+      "value": "4vp"
     }
   ]
 }

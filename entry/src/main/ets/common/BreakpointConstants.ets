@@ -1,14 +1,29 @@
-/** 与新闻模板 commonlib 相同的窗口断点。 */
+/**
+ * Constants for breakpoint.
+ */
 export class BreakpointConstants {
-  static readonly BREAKPOINT_SM: string = 'sm';
-  static readonly BREAKPOINT_MD: string = 'md';
-  static readonly BREAKPOINT_LG: string = 'lg';
-  static readonly RANGE_SM: string = '320vp';
-  static readonly RANGE_MD: string = '600vp';
-  static readonly RANGE_LG: string = '840vp';
-  static readonly COLUMNS_SM: number = 4;
-  static readonly COLUMNS_MD: number = 8;
-  static readonly COLUMNS_LG: number = 12;
-  static readonly SPAN_LG: number = 8;
-  static readonly OFFSET_LG: number = 2;
+  /**
+   * Breakpoints that represent small device types.
+   */
+  public static readonly BREAKPOINT_SM: string = 'sm';
+
+  /**
+   * Breakpoints that represent middle device types.
+   */
+  public static readonly BREAKPOINT_MD: string = 'md';
+
+  /**
+   * Breakpoints that represent large device types.
+   */
+  public static readonly BREAKPOINT_LG: string = 'lg';
+
+  /**
+   * Grid row column list.
+   */
+  public static readonly GRID_ROW_COLUMNS: number[] = [1, 2, 12];
+
+  /**
+   * Grid column span list.
+   */
+  public static readonly GRID_COLUMN_SPANS: number[] = [1, 2, 3, 8, 12];
 }

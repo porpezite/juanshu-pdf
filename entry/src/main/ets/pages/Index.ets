@@ -9,7 +9,7 @@ import { toast } from '../components/Chrome';
 import { AppHost } from '../platform/AppHost';
 
 @Component
-struct NewsRow {
+struct NewsCard {
   label: string = '';
   detail: string = '';
   thumb: boolean = false;
@@ -17,46 +17,66 @@ struct NewsRow {
   };
 
   build() {
-    Column() {
-      Row() {
-        Column() {
-          Text(this.label)
-            .fontSize(16)
-            .fontWeight(FontWeight.Medium)
-            .fontColor('#182431')
-            .maxLines(2)
-            .textOverflow({ overflow: TextOverflow.Ellipsis })
-          if (this.detail.length > 0) {
-            Text(this.detail)
-              .fontSize(12)
-              .fontColor('#99182431')
-              .maxLines(2)
-              .margin({ top: 8 })
-          }
-        }
-        .alignItems(HorizontalAlign.Start)
-        .layoutWeight(1)
-        .margin({ right: this.thumb ? 12 : 0 })
-
-        if (this.thumb) {
-          Image($r('app.media.app_icon'))
-            .width(96)
-            .height(72)
-            .borderRadius(8)
-            .objectFit(ImageFit.Cover)
+    Row() {
+      Column() {
+        Text(this.label)
+          .fontSize(16)
+          .fontWeight(FontWeight.Medium)
+          .fontColor($r('app.color.fontColor_text3'))
+          .maxLines(2)
+          .textOverflow({ overflow: TextOverflow.Ellipsis })
+        if (this.detail.length > 0) {
+          Text(this.detail)
+            .fontSize(12)
+            .fontColor($r('app.color.news_time_fontColor'))
+            .maxLines(1)
+            .margin({ top: 8 })
         }
       }
-      .width('100%')
-      .alignItems(VerticalAlign.Center)
-      .padding({ left: 16, right: 16, top: 16, bottom: 16 })
+      .alignItems(HorizontalAlign.Start)
+      .layoutWeight(1)
+      .margin({ right: this.thumb ? 12 : 0 })
 
-      Divider()
-        .strokeWidth(0.5)
-        .color('#E8E8E8')
-        .margin({ left: 16, right: 16 })
+      if (this.thumb) {
+        Image($r('app.media.app_icon'))
+          .width(108)
+          .height(80)
+          .borderRadius(8)
+          .objectFit(ImageFit.Cover)
+      }
     }
     .width('100%')
+    .alignItems(VerticalAlign.Top)
+    .padding(12)
     .backgroundColor(Color.White)
+    .borderRadius(16)
+    .onClick(() => {
+      this.onTap();
+    })
+  }
+}
+
+@Component
+struct MineShortcut {
+  label: string = '';
+  icon: ResourceStr = '';
+  onTap: () => void = () => {
+  };
+
+  build() {
+    Column() {
+      Image(this.icon)
+        .width(40)
+        .height(40)
+      Text(this.label)
+        .fontSize(12)
+        .fontColor($r('app.color.news_time_fontColor'))
+        .maxLines(1)
+        .margin({ top: 8 })
+    }
+    .width(72)
+    .padding({ top: 16, bottom: 12 })
+    .alignItems(HorizontalAlign.Center)
     .onClick(() => {
       this.onTap();
     })
@@ -74,28 +94,25 @@ struct NewsFrame {
   build() {
     GridRow({
       columns: {
-        xs: BreakpointConstants.COLUMNS_SM,
-        sm: BreakpointConstants.COLUMNS_SM,
-        md: BreakpointConstants.COLUMNS_MD,
-        lg: BreakpointConstants.COLUMNS_LG
+        sm: BreakpointConstants.GRID_ROW_COLUMNS[0],
+        md: BreakpointConstants.GRID_ROW_COLUMNS[1],
+        lg: BreakpointConstants.GRID_ROW_COLUMNS[2]
       },
       breakpoints: {
-        value: [BreakpointConstants.RANGE_SM, BreakpointConstants.RANGE_MD, BreakpointConstants.RANGE_LG],
+        value: ['320vp', '600vp', '840vp'],
         reference: BreakpointsReference.WindowSize
       }
     }) {
       GridCol({
         span: {
-          xs: BreakpointConstants.COLUMNS_SM,
-          sm: BreakpointConstants.COLUMNS_SM,
-          md: BreakpointConstants.COLUMNS_MD,
-          lg: BreakpointConstants.SPAN_LG
+          sm: BreakpointConstants.GRID_COLUMN_SPANS[0],
+          md: BreakpointConstants.GRID_COLUMN_SPANS[1],
+          lg: BreakpointConstants.GRID_COLUMN_SPANS[3]
         },
         offset: {
-          xs: 0,
           sm: 0,
           md: 0,
-          lg: BreakpointConstants.OFFSET_LG
+          lg: 2
         }
       }) {
         this.content()
@@ -114,6 +131,7 @@ struct NewsFrame {
 struct Index {
   @State currentIndex: number = 0;
   @State docTab: number = 0;
+  @State showSearch: boolean = false;
   @State query: string = '';
   @State docs: DocSummary[] = [];
   private navStack: NavPathStack = new NavPathStack();
@@ -133,11 +151,11 @@ struct Index {
       Image(this.currentIndex === index ? selectedImg : normalImg)
         .width(24)
         .height(24)
-        .objectFit(ImageFit.Contain)
       Text(title)
-        .fontSize(10)
-        .fontColor(this.currentIndex === index ? '#FF6B00' : '#99182431')
-        .margin({ top: 2 })
+        .fontColor(this.currentIndex === index ? $r('app.color.icon_color_highlight') :
+          $r('app.color.icon_color_level2'))
+        .fontSize($r('app.string.font_size_12'))
+        .margin({ top: $r('app.string.margin_xs') })
     }
     .width('100%')
     .height('100%')
@@ -149,12 +167,16 @@ struct Index {
       Column() {
         Tabs({ barPosition: BarPosition.End, controller: this.tabsController, index: this.currentIndex }) {
           TabContent() {
-            this.docsPage()
+            if (this.currentIndex === 0) {
+              this.docsPage()
+            }
           }
           .tabBar(this.tabBarBuilder('文档', 0, $r('app.media.ic_doc_selected'), $r('app.media.ic_doc')))
 
           TabContent() {
-            this.toolsPage()
+            if (this.currentIndex === 1) {
+              this.toolsPage()
+            }
           }
           .tabBar(this.tabBarBuilder('工具', 1, $r('app.media.ic_tool_selected'), $r('app.media.ic_tool')))
 
@@ -173,81 +195,68 @@ struct Index {
           .tabBar(this.tabBarBuilder('扫描', 2, $r('app.media.ic_scan_selected'), $r('app.media.ic_scan')))
 
           TabContent() {
-            this.minePage()
+            if (this.currentIndex === 3) {
+              this.minePage()
+            }
           }
+          .expandSafeArea([SafeAreaType.SYSTEM], [SafeAreaEdge.TOP])
           .tabBar(this.tabBarBuilder('我的', 3, $r('app.media.ic_mine_selected'), $r('app.media.ic_mine')))
         }
-        .barHeight(56)
-        .barMode(BarMode.Fixed)
         .scrollable(false)
-        .barBackgroundColor(Color.White)
-        .width('100%')
         .height('100%')
-        .backgroundColor(Color.White)
+        .barHeight(56)
+        .animationDuration(0)
+        .barMode(BarMode.Fixed)
+        .expandSafeArea([SafeAreaType.SYSTEM], [SafeAreaEdge.TOP])
         .onChange((index: number) => {
           this.currentIndex = index;
         })
       }
       .width('100%')
       .height('100%')
+      .backgroundColor(Color.White)
     }
     .hideTitleBar(true)
+    .hideToolBar(true)
+    .hideBackButton(true)
     .mode(NavigationMode.Stack)
     .width('100%')
     .height('100%')
-    .backgroundColor(Color.White)
   }
 
   @Builder
   docsPage() {
     NewsFrame() {
       Column() {
-        Row() {
-          Text('文档')
-            .fontSize(26)
-            .fontWeight(FontWeight.Bold)
-            .fontColor('#182431')
-            .layoutWeight(1)
-          Text('导入')
-            .fontSize(16)
-            .fontColor('#182431')
-            .onClick(() => {
-              this.importDoc();
-            })
+        this.pageTitle('文档', true)
+        if (this.showSearch) {
+          this.searchBar()
         }
-        .width('100%')
-        .alignItems(VerticalAlign.Center)
-        .padding({ left: 16, right: 16, top: 16, bottom: 12 })
+        Tabs({ barPosition: BarPosition.Start, index: this.docTab }) {
+          TabContent() {
+            this.recentList()
+          }
+          .backgroundColor($r('app.color.list_background'))
+          .padding({ top: 8 })
+          .tabBar(this.channelTab('最近', 0))
 
-        Row() {
-          this.subTab('最近', 0)
-          this.subTab('文件夹', 1)
+          TabContent() {
+            this.folderList()
+          }
+          .backgroundColor($r('app.color.list_background'))
+          .padding({ top: 8 })
+          .tabBar(this.channelTab('文件夹', 1))
         }
+        .layoutWeight(1)
         .width('100%')
-        .justifyContent(FlexAlign.Start)
-        .padding({ left: 16, right: 16, bottom: 8 })
-
-        Row() {
-          Search({ value: this.query, placeholder: '搜索' })
-            .layoutWeight(1)
-            .height(40)
-            .onChange((value: string) => {
-              this.query = value;
-              this.reloadDocs();
-            })
-            .onSubmit((value: string) => {
-              this.query = value;
-              this.reloadDocs();
-            })
-        }
-        .width('100%')
-        .padding({ left: 16, right: 16, bottom: 8 })
-
-        if (this.docTab === 0) {
-          this.recentList()
-        } else {
-          this.folderList()
-        }
+        .margin({ top: 12 })
+        .barHeight(48)
+        .barMode(BarMode.Scrollable)
+        .barWidth('100%')
+        .vertical(false)
+        .onChange((index: number) => {
+          this.docTab = index;
+        })
       }
       .width('100%')
       .height('100%')
@@ -256,24 +265,68 @@ struct Index {
   }
 
   @Builder
-  subTab(label: string, index: number) {
+  pageTitle(title: string, withImport: boolean) {
+    Row() {
+      Text(title)
+        .fontSize(24)
+        .fontWeight(FontWeight.Bold)
+        .fontColor($r('app.color.fontColor_text3'))
+        .layoutWeight(1)
+      if (withImport) {
+        Text('导入')
+          .fontSize(16)
+          .fontColor($r('app.color.fontColor_text3'))
+          .margin({ right: 16 })
+          .onClick(() => {
+            this.importDoc();
+          })
+      }
+      Image($r('app.media.ic_search'))
+        .width(24)
+        .height(24)
+        .onClick(() => {
+          this.toggleSearch();
+        })
+    }
+    .width('100%')
+    .alignItems(VerticalAlign.Center)
+    .padding({ left: 16, right: 16, top: 8, bottom: 4 })
+  }
+
+  @Builder
+  searchBar() {
+    Row() {
+      Search({ value: this.query, placeholder: '搜索' })
+        .layoutWeight(1)
+        .height(40)
+        .onChange((value: string) => {
+          this.query = value;
+          this.reloadDocs();
+        })
+        .onSubmit((value: string) => {
+          this.query = value;
+          this.reloadDocs();
+        })
+    }
+    .width('100%')
+    .padding({ left: 16, right: 16, top: 8 })
+  }
+
+  @Builder
+  channelTab(label: string, index: number) {
     Column() {
       Text(label)
+        .margin({ left: 24, right: 22 })
         .fontSize(16)
-        .fontWeight(this.docTab === index ? FontWeight.Bold : FontWeight.Normal)
-        .fontColor(this.docTab === index ? '#182431' : '#99182431')
-      Row()
-        .width(24)
-        .height(2)
-        .margin({ top: 6 })
-        .borderRadius(1)
-        .backgroundColor(this.docTab === index ? '#FF6B00' : Color.Transparent)
+        .fontWeight(this.docTab === index ? FontWeight.Medium : FontWeight.Normal)
+        .fontColor(this.docTab === index ? $r('app.color.fontColor_text3') : $r('app.color.news_time_fontColor'))
+        .borderColor({ bottom: $r('app.color.tab_indicator') })
+        .borderWidth({ bottom: this.docTab === index ? 3 : 0 })
+        .padding({ bottom: 8 })
     }
-    .margin({ right: 28 })
-    .alignItems(HorizontalAlign.Center)
-    .onClick(() => {
-      this.docTab = index;
-    })
+    .height('100%')
+    .justifyContent(FlexAlign.End)
+    .alignItems(HorizontalAlign.Start)
   }
 
   @Builder
@@ -281,14 +334,14 @@ struct Index {
     if (this.docs.length === 0) {
       Text('最近还没有文档')
         .fontSize(14)
-        .fontColor('#99182431')
+        .fontColor($r('app.color.news_time_fontColor'))
         .width('100%')
         .padding({ left: 16, top: 24 })
     } else {
-      List() {
+      List({ space: 12 }) {
         ForEach(this.docs, (item: DocSummary) => {
           ListItem() {
-            NewsRow({
+            NewsCard({
               label: item.name,
               detail: this.formatWhen(item.updatedAt) + '  ' + item.pageCount + ' 页',
               thumb: true,
@@ -299,18 +352,19 @@ struct Index {
           }
         }, (item: DocSummary) => item.id + ':' + item.updatedAt)
       }
-      .layoutWeight(1)
       .width('100%')
+      .height('100%')
+      .padding({ left: 16, right: 16, bottom: 12 })
       .scrollBar(BarState.Off)
     }
   }
 
   @Builder
   folderList() {
-    List() {
+    List({ space: 12 }) {
       ForEach(this.visibleFolders(), (name: string) => {
         ListItem() {
-          NewsRow({
+          NewsCard({
             label: name,
             thumb: true,
             onTap: () => {
@@ -320,8 +374,9 @@ struct Index {
         }
       }, (name: string) => name)
     }
-    .layoutWeight(1)
     .width('100%')
+    .height('100%')
+    .padding({ left: 16, right: 16, bottom: 12 })
     .scrollBar(BarState.Off)
   }
 
@@ -329,17 +384,11 @@ struct Index {
   toolsPage() {
     NewsFrame() {
       Column() {
-        Text('工具')
-          .fontSize(26)
-          .fontWeight(FontWeight.Bold)
-          .fontColor('#182431')
-          .width('100%')
-          .padding({ left: 16, right: 16, top: 16, bottom: 8 })
-
-        List() {
+        this.pageTitle('工具', false)
+        List({ space: 12 }) {
           ListItemGroup({ header: this.headRecognize }) {
             ListItem() {
-              NewsRow({
+              NewsCard({
                 label: '提取文字',
                 onTap: () => {
                   this.openConvert('text');
@@ -347,7 +396,7 @@ struct Index {
               })
             }
             ListItem() {
-              NewsRow({
+              NewsCard({
                 label: '扫描证件',
                 onTap: () => {
                   this.openTab(2);
@@ -355,7 +404,7 @@ struct Index {
               })
             }
             ListItem() {
-              NewsRow({
+              NewsCard({
                 label: '扫描书籍',
                 onTap: () => {
                   this.openTab(2);
@@ -365,7 +414,7 @@ struct Index {
           }
           ListItemGroup({ header: this.headPdf }) {
             ListItem() {
-              NewsRow({
+              NewsCard({
                 label: '合并',
                 onTap: () => {
                   this.openManage('merge');
@@ -373,7 +422,7 @@ struct Index {
               })
             }
             ListItem() {
-              NewsRow({
+              NewsCard({
                 label: '拆分',
                 onTap: () => {
                   this.openManage('split');
@@ -381,7 +430,7 @@ struct Index {
               })
             }
             ListItem() {
-              NewsRow({
+              NewsCard({
                 label: '压缩',
                 onTap: () => {
                   this.openManage('compress');
@@ -389,7 +438,7 @@ struct Index {
               })
             }
             ListItem() {
-              NewsRow({
+              NewsCard({
                 label: '页序',
                 onTap: () => {
                   this.openManage('order');
@@ -399,7 +448,7 @@ struct Index {
           }
           ListItemGroup({ header: this.headExport }) {
             ListItem() {
-              NewsRow({
+              NewsCard({
                 label: '转 Word',
                 onTap: () => {
                   this.openConvert('word');
@@ -407,7 +456,7 @@ struct Index {
               })
             }
             ListItem() {
-              NewsRow({
+              NewsCard({
                 label: '转图片',
                 onTap: () => {
                   this.openConvert('image');
@@ -415,7 +464,7 @@ struct Index {
               })
             }
             ListItem() {
-              NewsRow({
+              NewsCard({
                 label: '分享',
                 onTap: () => {
                   this.shareRecent();
@@ -426,6 +475,8 @@ struct Index {
         }
         .layoutWeight(1)
         .width('100%')
+        .padding({ left: 16, right: 16, bottom: 12 })
+        .backgroundColor($r('app.color.list_background'))
         .scrollBar(BarState.Off)
       }
       .width('100%')
@@ -438,70 +489,159 @@ struct Index {
   headRecognize() {
     Text('扫描与识别')
       .fontSize(14)
-      .fontColor('#99182431')
+      .fontColor($r('app.color.news_time_fontColor'))
       .width('100%')
-      .padding({ left: 16, top: 16, bottom: 4 })
+      .padding({ top: 12, bottom: 4 })
   }
 
   @Builder
   headPdf() {
     Text('PDF处理')
       .fontSize(14)
-      .fontColor('#99182431')
+      .fontColor($r('app.color.news_time_fontColor'))
       .width('100%')
-      .padding({ left: 16, top: 16, bottom: 4 })
+      .padding({ top: 12, bottom: 4 })
   }
 
   @Builder
   headExport() {
     Text('转换导出')
       .fontSize(14)
-      .fontColor('#99182431')
+      .fontColor($r('app.color.news_time_fontColor'))
       .width('100%')
-      .padding({ left: 16, top: 16, bottom: 4 })
+      .padding({ top: 12, bottom: 4 })
   }
 
   @Builder
   minePage() {
     NewsFrame() {
       Column() {
-        Text('我的')
-          .fontSize(26)
-          .fontWeight(FontWeight.Bold)
-          .fontColor('#182431')
+        Stack({ alignContent: Alignment.BottomStart }) {
+          Image($r('app.media.banner_mine'))
+            .width('100%')
+            .height(188)
+            .objectFit(ImageFit.Cover)
+          Row() {
+            Text('我的')
+              .fontSize(28)
+              .fontWeight(FontWeight.Bold)
+              .fontColor(Color.White)
+              .layoutWeight(1)
+            Image($r('app.media.ic_search_light'))
+              .width(24)
+              .height(24)
+              .onClick(() => {
+                this.showSearch = true;
+                this.openTab(0);
+              })
+          }
           .width('100%')
-          .padding({ left: 16, right: 16, top: 16, bottom: 8 })
+          .padding({ left: 16, right: 16, bottom: 16 })
+        }
+        .width('100%')
+        .height(188)
 
-        List() {
-          ListItem() {
-            NewsRow({
+        Scroll() {
+          Row() {
+            MineShortcut({
               label: '本地优先',
-              detail: '文档保存在这台设备上，打开和扫描不要求上传。'
+              icon: $r('app.media.sc_local')
             })
-          }
-          ListItem() {
-            NewsRow({
+            MineShortcut({
               label: 'Free',
-              detail: '当前方案'
-            })
-          }
-          ListItem() {
-            NewsRow({
-              label: '取消订阅',
+              icon: $r('app.media.sc_free'),
               onTap: () => {
                 toast('当前是 Free，没有需要取消的订阅。');
               }
             })
+            MineShortcut({
+              label: '取消订阅',
+              icon: $r('app.media.sc_cancel'),
+              onTap: () => {
+                toast('当前是 Free，没有需要取消的订阅。');
+              }
+            })
+            MineShortcut({
+              label: '导入',
+              icon: $r('app.media.sc_import'),
+              onTap: () => {
+                this.importDoc();
+              }
+            })
+            MineShortcut({
+              label: '分享',
+              icon: $r('app.media.sc_share'),
+              onTap: () => {
+                this.shareRecent();
+              }
+            })
+            MineShortcut({
+              label: '扫描',
+              icon: $r('app.media.sc_scan'),
+              onTap: () => {
+                this.openTab(2);
+              }
+            })
           }
+          .padding({ left: 8, right: 8 })
         }
-        .layoutWeight(1)
-        .width('100%')
+        .scrollable(ScrollDirection.Horizontal)
         .scrollBar(BarState.Off)
+        .width('100%')
+        .backgroundColor(Color.White)
+
+        Column() {
+          Text('本地优先')
+            .fontSize(18)
+            .fontWeight(FontWeight.Bold)
+            .fontColor($r('app.color.fontColor_text3'))
+            .width('100%')
+            .padding({ top: 16, bottom: 12 })
+          Text('文档保存在这台设备上，打开和扫描不要求上传。')
+            .fontSize(14)
+            .fontColor($r('app.color.news_time_fontColor'))
+            .width('100%')
+            .padding(16)
+            .backgroundColor(Color.White)
+            .borderRadius(16)
+          Column() {
+            Text('Free')
+              .fontSize(16)
+              .fontWeight(FontWeight.Medium)
+              .fontColor($r('app.color.fontColor_text3'))
+              .width('100%')
+            Text('当前方案')
+              .fontSize(12)
+              .fontColor($r('app.color.news_time_fontColor'))
+              .width('100%')
+              .margin({ top: 8 })
+          }
+          .alignItems(HorizontalAlign.Start)
+          .width('100%')
+          .padding(16)
+          .margin({ top: 12 })
+          .backgroundColor(Color.White)
+          .borderRadius(16)
+        }
+        .width('100%')
+        .layoutWeight(1)
+        .alignItems(HorizontalAlign.Start)
+        .padding({ left: 16, right: 16 })
+        .backgroundColor($r('app.color.list_background'))
       }
       .width('100%')
       .height('100%')
       .backgroundColor(Color.White)
     }
+  }
+
+  private toggleSearch(): void {
+    if (this.currentIndex !== 0) {
+      this.showSearch = true;
+      this.openTab(0);
+      return;
+    }
+    this.showSearch = !this.showSearch;
   }
 
   private openTab(index: number): void {
@@ -538,6 +678,7 @@ struct Index {
     }
     toast('已导入');
     this.reloadDocs();
+    this.openTab(0);
   }
 
   private openDoc(id: string): void {

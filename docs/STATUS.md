@@ -4,7 +4,7 @@
 
 - HarmonyOS NEXT Stage 工程：`AppScope`、`entry` HAP、`core` HAR、hvigor、`module.json5`、中文应用名「卷舒 PDF」。
 - 四个模块还在：文档、工具、扫描、我的。扫描、编辑、转换和整理的原有页面仍可从工具进入。
-- 壳层按新闻模板：`Navigation` 包住底部 `Tabs`（文档、工具、扫描、我的），标签是 24×24 图标加文字。文档页是大标题、橙色下划线的「最近 / 文件夹」，列表左侧标题、右侧圆角缩略图。扫描页只有官方 `DocumentScanner`（与 DocDemoPage 同一套配置）。打开文档只有 PDF Kit `PdfView`。大屏用 `GridRow` 的 sm / md / lg 收内容宽度。
+- 壳层按新闻模板 `MainEntry`：`Navigation` 包住底部 `Tabs`（文档、工具、扫描、我的），标签是 24×24 图标加 12fp 文字，选中色 `#0A59F7`。文档页是 24fp 粗标题、搜索图标，以及 `#DC6450` 下划线的「最近 / 文件夹」。列表在 `#F1F3F5` 上，白卡片、标题在左、圆角缩略图在右。我的页是横幅、横向入口和卡片。扫描页只有官方 `DocumentScanner`。打开文档只有 PDF Kit `PdfView`。大屏用新闻模板的 `BreakpointConstants` 和 `GridRow`。
 - 产品说明在 `docs/PRODUCT.md`：相对夸克扫描王和扫描全能王的取舍、P0/P1、Free/Plus/Pro 与加油包规则、五个差异点、多端顺序。会员和分布式尚未做成功能。
 - 可移植核心，且不引用鸿蒙套件：
   - 文档找边、四角校正、灰度 / 黑白 / 色彩增强
