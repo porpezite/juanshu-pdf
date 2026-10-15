@@ -1,0 +1,15 @@
+node_modules/
+oh_modules/
+test-dist/
+**/build/
+**/.preview/
+**/.test/
+.hvigor/
+.idea/
+.cxx/
+local.properties
+*.hap
+*.har
+*.app
+*.log
+.DS_Store

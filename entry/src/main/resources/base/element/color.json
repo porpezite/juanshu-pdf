@@ -1,0 +1,20 @@
+{
+  "color": [
+    {
+      "name": "start_window_background",
+      "value": "#F6F4EF"
+    },
+    {
+      "name": "page_background",
+      "value": "#F6F4EF"
+    },
+    {
+      "name": "brand",
+      "value": "#1F6B4A"
+    },
+    {
+      "name": "ink",
+      "value": "#1C1B19"
+    }
+  ]
+}
