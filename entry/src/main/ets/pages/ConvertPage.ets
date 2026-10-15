@@ -5,6 +5,7 @@ import { AppHost } from '../platform/AppHost';
 
 class ConvertRoute {
   docId: string = '';
+  tool: string = '';
 }
 
 @Entry
@@ -18,6 +19,7 @@ struct ConvertPage {
   @State draft: string = '';
   @State files: DocSummary[] = [];
   @State busy: boolean = false;
+  @State tool: string = '';
 
   aboutToAppear(): void {
     const params = router.getParams();
@@ -26,13 +28,16 @@ struct ConvertPage {
       if (route.docId !== undefined && route.docId.length > 0) {
         this.docId = route.docId;
       }
+      if (route.tool !== undefined) {
+        this.tool = route.tool;
+      }
     }
     this.reload();
   }
 
   build() {
     Column() {
-      TitleBar({ title: '转换识别' })
+      TitleBar({ title: this.pageTitle() })
       Scroll() {
         Column() {
           Text(this.title)
@@ -44,7 +49,7 @@ struct ConvertPage {
             .fontColor('#6E6A62')
             .margin({ top: 4, bottom: 12 })
           this.docPicker()
-          Button(this.busy ? '正在识别…' : '识别本页')
+          Button(this.busy ? '正在识别' : '提取文字')
             .width('100%')
             .height(46)
             .margin({ top: 12 })
@@ -63,7 +68,7 @@ struct ConvertPage {
             .height(160)
             .margin({ top: 8 })
             .backgroundColor('#FFFFFF')
-          Button('导出正文')
+          Button('转 Word')
             .width('100%')
             .height(44)
             .margin({ top: 8 })
@@ -81,7 +86,7 @@ struct ConvertPage {
             .onClick(() => {
               this.saveTextPdf();
             })
-          Button('导出页面图片')
+          Button('转图片')
             .width('100%')
             .height(44)
             .margin({ top: 8 })
@@ -176,6 +181,16 @@ struct ConvertPage {
     .scrollable(ScrollDirection.Horizontal)
     .scrollBar(BarState.Off)
     .width('100%')
+  }
+
+  private pageTitle(): string {
+    if (this.tool === 'word') {
+      return '转 Word';
+    }
+    if (this.tool === 'image') {
+      return '转图片';
+    }
+    return '提取文字';
   }
 
   private reload(): void {

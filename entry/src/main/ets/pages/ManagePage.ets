@@ -1,7 +1,11 @@
-import { DocKind, DocSummary, identityOrder } from 'juanshu_core';
+import { DocSummary, identityOrder } from 'juanshu_core';
 import { TitleBar, stampName, toast } from '../components/Chrome';
 import { AppHost } from '../platform/AppHost';
 import { router } from '@kit.ArkUI';
+
+class ManageRoute {
+  tool: string = '';
+}
 
 @Entry
 @Component
@@ -13,8 +17,16 @@ struct ManagePage {
   @State order: number[] = [];
   @State ranges: string = '1-1';
   @State rename: string = '';
+  @State tool: string = '';
 
   aboutToAppear(): void {
+    const params = router.getParams();
+    if (params !== undefined && params !== null) {
+      const route = params as ManageRoute;
+      if (route.tool !== undefined) {
+        this.tool = route.tool;
+      }
+    }
     this.reload();
   }
 
@@ -24,7 +36,7 @@ struct ManagePage {
 
   build() {
     Column() {
-      TitleBar({ title: '文档' })
+      TitleBar({ title: this.toolTitle() })
       Scroll() {
         Column() {
           TextInput({ text: this.query, placeholder: '搜索文件名' })
@@ -112,7 +124,7 @@ struct ManagePage {
             .fontColor('#1C1B19')
             .maxLines(1)
             .textOverflow({ overflow: TextOverflow.Ellipsis })
-          Text((item.kind === DocKind.EXTERNAL ? '外部 PDF · ' : '卷舒文档 · ') + item.pageCount + ' 页')
+          Text(item.pageCount + ' 页')
             .fontSize(12)
             .fontColor('#6E6A62')
             .margin({ top: 2 })
@@ -276,6 +288,22 @@ struct ManagePage {
     .backgroundColor('#FFFFFF')
     .borderRadius(16)
     .alignItems(HorizontalAlign.Start)
+  }
+
+  private toolTitle(): string {
+    if (this.tool === 'merge') {
+      return '合并';
+    }
+    if (this.tool === 'split') {
+      return '拆分';
+    }
+    if (this.tool === 'compress') {
+      return '压缩';
+    }
+    if (this.tool === 'order') {
+      return '页序';
+    }
+    return '文档';
   }
 
   private reload(): void {

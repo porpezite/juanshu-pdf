@@ -2,7 +2,7 @@ import { image } from '@kit.ImageKit';
 import { router } from '@kit.ArkUI';
 import { pdfService, PdfView, pdfViewManager } from '@kit.PDFKit';
 import {
-  AnnKind, Annotation, DocKind, DocSummary, PdfDocumentModel, Point, rasterizeStroke, renderPage
+  AnnKind, Annotation, DocSummary, PdfDocumentModel, Point, rasterizeStroke, renderPage
 } from 'juanshu_core';
 import { TitleBar, toast } from '../components/Chrome';
 import { AppHost } from '../platform/AppHost';
@@ -51,63 +51,22 @@ struct EditPage {
   build() {
     Column() {
       TitleBar({
-        title: '编辑',
-        action: this.docId.length > 0 ? '保存' : '',
+        title: this.docId.length > 0 ? this.title : '文档',
+        action: '',
         onAction: () => {
-          this.save();
         }
       })
       if (this.docId.length === 0) {
         this.picker()
       } else {
-        Scroll() {
-          Column() {
-            Text(this.title)
-              .fontSize(16)
-              .fontWeight(FontWeight.Medium)
-              .fontColor('#1C1B19')
-              .width('100%')
-            Text('第 ' + (this.pageIndex + 1) + ' / ' + Math.max(1, this.pageCount) + ' 页')
-              .fontSize(12)
-              .fontColor('#6E6A62')
-              .margin({ top: 4, bottom: 10 })
-            if (this.external) {
-              PdfView({
-                controller: this.controller,
-                pageFit: pdfService.PageFit.FIT_WIDTH
-              })
-                .width('100%')
-                .height(420)
-                .borderRadius(16)
-                .backgroundColor('#E7E2D8')
-            } else if (this.preview !== undefined) {
-              this.canvas()
-            }
-            if (this.body.length > 0) {
-              Text(this.body)
-                .fontSize(14)
-                .fontColor('#1C1B19')
-                .width('100%')
-                .margin({ top: 10 })
-                .padding(12)
-                .backgroundColor('#FFFFFF')
-                .borderRadius(12)
-            }
-            this.tools()
-            if (this.showEntry) {
-              this.entryPanel()
-            }
-            if (this.signing) {
-              this.signPanel()
-            }
-            this.markList()
-            this.pageButtons()
-          }
+        PdfView({
+          controller: this.controller,
+          pageFit: pdfService.PageFit.FIT_WIDTH
+        })
           .width('100%')
-          .padding({ left: 20, right: 20, bottom: 28 })
-        }
-        .layoutWeight(1)
-        .scrollBar(BarState.Off)
+          .layoutWeight(1)
+          .backgroundColor('#E7E2D8')
+        this.pageButtons()
       }
     }
     .width('100%')
@@ -119,7 +78,7 @@ struct EditPage {
   picker() {
     Scroll() {
       Column() {
-        Text('打开一份文档，或新建空白文稿')
+        Text('文档')
           .fontSize(14)
           .fontColor('#6E6A62')
           .width('100%')
@@ -334,7 +293,7 @@ struct EditPage {
         })
     }
     .width('100%')
-    .margin({ top: 12 })
+    .padding({ left: 16, right: 16, top: 12, bottom: 16 })
   }
 
   private reload(): void {
@@ -348,15 +307,14 @@ struct EditPage {
       return;
     }
     this.title = summary.name;
-    this.external = summary.kind === DocKind.EXTERNAL;
     this.model = AppHost.load(this.docId);
     if (this.model !== null) {
       this.pageCount = this.model.pages.length;
       this.external = false;
-      this.showCurrent();
-      return;
+    } else {
+      this.pageCount = summary.pageCount;
+      this.external = true;
     }
-    this.pageCount = summary.pageCount;
     this.loadNative();
   }
 
@@ -401,11 +359,7 @@ struct EditPage {
       return;
     }
     this.pageIndex = next;
-    if (!this.external && this.model !== null) {
-      this.showCurrent();
-    } else {
-      this.controller.goToPage(next);
-    }
+    this.controller.goToPage(next);
   }
 
   private finishDraw(x: number, y: number): void {

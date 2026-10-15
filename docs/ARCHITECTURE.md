@@ -74,8 +74,8 @@ core (HAR, juanshu_core)
 
 | 页面 | 路径 | 职责 |
 | --- | --- | --- |
-| 首页 | `pages/Index` | 手机：工具宫格、最近文件、底部导航。平板和 PC：左侧栏加右侧最近文件 |
-| 扫描 | `pages/ScanPage` | 拍摄、找边、校正、滤镜、多页。预览、裁边和快门叠在同一个 Stack 里 |
+| 首页 | `pages/Index` | 手机底部标签：文档、工具、扫描、我的。宽屏用 Navigation 分栏 |
+| 扫描 | `pages/ScanPage` | 全屏 Vision Kit `DocumentScanner`，默认原图滤镜 |
 | 编辑 | `pages/EditPage` | 预览、批注、签名、翻页 |
 | 转换识别 | `pages/ConvertPage` | OCR、导出文字和图片、反向生成 PDF |
 | 文档 | `pages/ManagePage` | 搜索、导入、合并、拆分、旋转、压缩 |
