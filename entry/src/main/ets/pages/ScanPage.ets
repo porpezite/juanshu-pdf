@@ -27,11 +27,11 @@ struct ScanPage {
   @State blx: number = 0.08;
   @State bly: number = 0.92;
   @State preview: image.PixelMap | undefined = undefined;
+  @State areaWidth: number = 1;
+  @State areaHeight: number = 1;
   private source: RgbaImage | null = null;
   private warped: RgbaImage | null = null;
   private pages: RgbaImage[] = [];
-  private areaWidth: number = 1;
-  private areaHeight: number = 1;
   private dragX: number = 0;
   private dragY: number = 0;
   private scannerConfig: DocumentScannerConfig = new DocumentScannerConfig();
@@ -63,32 +63,7 @@ struct ScanPage {
           .layoutWeight(1)
           .width('100%')
       } else {
-        Scroll() {
-          Column() {
-            Text(this.message)
-              .fontSize(13)
-              .fontColor('#6E6A62')
-              .width('100%')
-              .margin({ bottom: 12 })
-            if (this.useCamera) {
-              this.cameraBox()
-            } else if (this.preview !== undefined) {
-              this.previewBox()
-            }
-            if (this.stage === 0) {
-              this.captureActions()
-            } else if (this.stage === 1) {
-              this.adjustActions()
-            } else {
-              this.filterActions()
-            }
-            this.pageTray()
-          }
-          .width('100%')
-          .padding({ left: 20, right: 20, bottom: 28 })
-        }
-        .layoutWeight(1)
-        .scrollBar(BarState.Off)
+        this.scanStage()
       }
     }
     .width('100%')
@@ -97,54 +72,164 @@ struct ScanPage {
   }
 
   @Builder
-  cameraBox() {
-    Column() {
-      XComponent({
-        id: 'juanshuCamera',
-        type: XComponentType.SURFACE,
-        controller: this.xController
-      })
-        .onLoad(() => {
-          this.openLiveCamera();
-        })
-        .width('100%')
-        .height(360)
-        .borderRadius(16)
-      Button('拍摄')
-        .width('100%')
-        .height(44)
-        .margin({ top: 12 })
-        .backgroundColor('#1F6B4A')
-        .fontColor('#FFFFFF')
-        .onClick(() => {
-          this.takeLivePhoto();
-        })
+  scanStage() {
+    Stack({ alignContent: Alignment.Bottom }) {
+      this.viewfinder()
+      if (this.stage === 1 && this.preview !== undefined) {
+        this.cropGuides()
+      }
+      this.shutterBar()
     }
     .width('100%')
+    .layoutWeight(1)
   }
 
   @Builder
-  previewBox() {
-    Stack({ alignContent: Alignment.TopStart }) {
-      Image(this.preview)
+  viewfinder() {
+    Stack() {
+      if (this.useCamera) {
+        XComponent({
+          id: 'juanshuCamera',
+          type: XComponentType.SURFACE,
+          controller: this.xController
+        })
+          .onLoad(() => {
+            this.openLiveCamera();
+          })
+          .width('100%')
+          .height('100%')
+      } else if (this.preview !== undefined) {
+        Image(this.preview)
+          .width('100%')
+          .height('100%')
+          .objectFit(ImageFit.Contain)
+          .backgroundColor('#E7E2D8')
+      } else {
+        Column() {
+          Text('取景')
+            .fontSize(22)
+            .fontColor('#6E6A62')
+          Text('打开相机、相册或示例页')
+            .fontSize(13)
+            .fontColor('#6E6A62')
+            .margin({ top: 6 })
+        }
         .width('100%')
-        .height(360)
-        .objectFit(ImageFit.Contain)
-        .borderRadius(16)
+        .height('100%')
+        .justifyContent(FlexAlign.Center)
         .backgroundColor('#E7E2D8')
-      if (this.stage === 1) {
-        this.handle(this.tlx, this.tly, 0)
-        this.handle(this.trx, this.try_, 1)
-        this.handle(this.brx, this.bry, 2)
-        this.handle(this.blx, this.bly, 3)
       }
     }
     .width('100%')
-    .height(360)
+    .height('100%')
+  }
+
+  @Builder
+  cropGuides() {
+    Stack({ alignContent: Alignment.TopStart }) {
+      this.guideEdge(this.tlx, this.tly, this.trx, this.try_)
+      this.guideEdge(this.trx, this.try_, this.brx, this.bry)
+      this.guideEdge(this.brx, this.bry, this.blx, this.bly)
+      this.guideEdge(this.blx, this.bly, this.tlx, this.tly)
+      this.handle(this.tlx, this.tly, 0)
+      this.handle(this.trx, this.try_, 1)
+      this.handle(this.brx, this.bry, 2)
+      this.handle(this.blx, this.bly, 3)
+    }
+    .width('100%')
+    .height('100%')
+    .hitTestBehavior(HitTestMode.Transparent)
     .onAreaChange((_old, area) => {
-      this.areaWidth = Number(area.width);
-      this.areaHeight = Number(area.height);
+      const width = Number(area.width);
+      const height = Number(area.height);
+      if (width !== this.areaWidth) {
+        this.areaWidth = width;
+      }
+      if (height !== this.areaHeight) {
+        this.areaHeight = height;
+      }
     })
+  }
+
+  @Builder
+  guideEdge(x1: number, y1: number, x2: number, y2: number) {
+    Line()
+      .width('100%')
+      .height('100%')
+      .startPoint([x1 * this.areaWidth, y1 * this.areaHeight])
+      .endPoint([x2 * this.areaWidth, y2 * this.areaHeight])
+      .stroke('#1F6B4A')
+      .strokeWidth(2)
+      .hitTestBehavior(HitTestMode.Transparent)
+  }
+
+  @Builder
+  shutterBar() {
+    if (this.stage === 1) {
+      this.adjustBar()
+    } else {
+      Scroll() {
+        Column() {
+          Text(this.message)
+            .fontSize(13)
+            .fontColor('#6E6A62')
+            .width('100%')
+            .margin({ bottom: 8 })
+          if (this.stage === 0) {
+            this.captureActions()
+          } else {
+            this.filterActions()
+          }
+          this.pageTray()
+        }
+        .width('100%')
+      }
+      .width('100%')
+      .constraintSize({ maxHeight: '46%' })
+      .scrollBar(BarState.Off)
+      .padding({ left: 16, right: 16, top: 12, bottom: 16 })
+      .backgroundColor('#F6F4EF')
+      .borderRadius({ topLeft: 18, topRight: 18 })
+    }
+  }
+
+  @Builder
+  adjustBar() {
+    Column() {
+      Flex({ justifyContent: FlexAlign.SpaceBetween, alignItems: ItemAlign.Center }) {
+        Text('拖动四角贴合纸边')
+          .fontSize(13)
+          .fontColor('#6E6A62')
+          .layoutWeight(1)
+        Button('重拍')
+          .height(40)
+          .margin({ right: 8 })
+          .backgroundColor('#FFFFFF')
+          .fontColor('#1C1B19')
+          .onClick(() => {
+            this.stage = 0;
+            this.message = '可以继续拍摄下一页';
+          })
+        Button('校正')
+          .height(40)
+          .backgroundColor('#1F6B4A')
+          .fontColor('#FFFFFF')
+          .onClick(() => {
+            this.applyWarp();
+          })
+      }
+      .width('100%')
+      if (this.pageCount > 0) {
+        Text('已收集 ' + this.pageCount + ' 页')
+          .fontSize(12)
+          .fontColor('#1F6B4A')
+          .margin({ top: 8 })
+      }
+    }
+    .width('100%')
+    .padding({ left: 16, right: 16, top: 12, bottom: 16 })
+    .backgroundColor('#F6F4EF')
+    .borderRadius({ topLeft: 18, topRight: 18 })
   }
 
   @Builder
@@ -172,87 +257,73 @@ struct ScanPage {
   @Builder
   captureActions() {
     Column() {
-      Button('智能扫描')
+      if (this.useCamera) {
+        Flex({ justifyContent: FlexAlign.Center }) {
+          Button('拍摄')
+            .width(76)
+            .height(76)
+            .borderRadius(38)
+            .backgroundColor('#1F6B4A')
+            .fontColor('#FFFFFF')
+            .fontSize(16)
+            .onClick(() => {
+              this.takeLivePhoto();
+            })
+        }
         .width('100%')
-        .height(46)
-        .backgroundColor('#1F6B4A')
-        .fontColor('#FFFFFF')
-        .borderRadius(12)
-        .onClick(() => {
-          this.startNativeScan();
-        })
-      Button(this.useCamera ? '关闭取景' : '打开相机取景')
-        .width('100%')
-        .height(44)
-        .margin({ top: 8 })
-        .backgroundColor('#FFFFFF')
-        .fontColor('#1F6B4A')
-        .borderRadius(12)
-        .onClick(() => {
-          this.toggleCamera();
-        })
-      Button('系统相机')
-        .width('100%')
-        .height(44)
-        .margin({ top: 8 })
-        .backgroundColor('#FFFFFF')
-        .fontColor('#1C1B19')
-        .borderRadius(12)
-        .onClick(() => {
-          this.captureSystem();
-        })
-      Row() {
-        Button('相册')
-          .layoutWeight(1)
-          .height(44)
+        .margin({ bottom: 10 })
+      }
+      Flex({ wrap: FlexWrap.Wrap, justifyContent: FlexAlign.SpaceBetween }) {
+        Button('智能扫描')
+          .width('48%')
+          .height(42)
+          .margin({ bottom: 8 })
+          .backgroundColor('#1F6B4A')
+          .fontColor('#FFFFFF')
+          .borderRadius(12)
+          .onClick(() => {
+            this.startNativeScan();
+          })
+        Button(this.useCamera ? '关闭取景' : '打开相机')
+          .width('48%')
+          .height(42)
+          .margin({ bottom: 8 })
+          .backgroundColor('#FFFFFF')
+          .fontColor('#1F6B4A')
+          .borderRadius(12)
+          .onClick(() => {
+            this.toggleCamera();
+          })
+        Button('系统相机')
+          .width('48%')
+          .height(42)
           .backgroundColor('#FFFFFF')
           .fontColor('#1C1B19')
+          .borderRadius(12)
+          .onClick(() => {
+            this.captureSystem();
+          })
+        Button('相册')
+          .width('48%')
+          .height(42)
+          .backgroundColor('#FFFFFF')
+          .fontColor('#1C1B19')
+          .borderRadius(12)
           .onClick(() => {
             this.pickAlbum();
           })
         Button('示例页')
-          .layoutWeight(1)
-          .height(44)
-          .margin({ left: 8 })
+          .width('48%')
+          .height(42)
+          .margin({ top: 8 })
           .backgroundColor('#FFFFFF')
           .fontColor('#1C1B19')
+          .borderRadius(12)
           .onClick(() => {
             this.useSample();
           })
       }
       .width('100%')
-      .margin({ top: 8 })
-    }
-    .width('100%')
-    .margin({ top: 16 })
-  }
-
-  @Builder
-  adjustActions() {
-    Column() {
-      Text('拖动四角，贴合纸张边缘')
-        .fontSize(13)
-        .fontColor('#6E6A62')
-        .margin({ top: 12 })
-      Button('校正并选择滤镜')
-        .width('100%')
-        .height(46)
-        .margin({ top: 8 })
-        .backgroundColor('#1F6B4A')
-        .fontColor('#FFFFFF')
-        .onClick(() => {
-          this.applyWarp();
-        })
-      Button('重拍')
-        .width('100%')
-        .height(40)
-        .margin({ top: 8 })
-        .backgroundColor('#FFFFFF')
-        .fontColor('#1C1B19')
-        .onClick(() => {
-          this.stage = 0;
-          this.message = '可以继续拍摄下一页';
-        })
     }
     .width('100%')
   }
@@ -260,14 +331,13 @@ struct ScanPage {
   @Builder
   filterActions() {
     Column() {
-      Row() {
+      Flex({ justifyContent: FlexAlign.SpaceBetween }) {
         this.filterChip('原图', ScanFilter.ORIGINAL)
         this.filterChip('灰度', ScanFilter.GRAY)
         this.filterChip('黑白', ScanFilter.BW)
         this.filterChip('增强', ScanFilter.COLOR)
       }
       .width('100%')
-      .margin({ top: 12 })
       Button('加入多页')
         .width('100%')
         .height(46)

@@ -70,11 +70,71 @@ export struct ToolTile {
         .margin({ top: 4 })
     }
     .alignItems(HorizontalAlign.Start)
-    .width('48%')
+    .width('100%')
     .padding(16)
-    .margin({ bottom: 12 })
     .backgroundColor('#FFFFFF')
     .borderRadius(18)
+    .onClick(() => {
+      this.onTap();
+    })
+  }
+}
+
+@Component
+export struct SideItem {
+  mark: string = '';
+  title: string = '';
+  onTap: () => void = () => {
+  };
+
+  build() {
+    Row() {
+      Text(this.mark)
+        .fontSize(16)
+        .fontWeight(FontWeight.Medium)
+        .fontColor('#1F6B4A')
+        .width(36)
+        .height(36)
+        .textAlign(TextAlign.Center)
+        .borderRadius(12)
+        .backgroundColor('#E7F2EC')
+      Text(this.title)
+        .fontSize(16)
+        .fontColor('#1C1B19')
+        .margin({ left: 12 })
+    }
+    .width('100%')
+    .height(52)
+    .padding({ left: 8, right: 8 })
+    .margin({ bottom: 4 })
+    .borderRadius(14)
+    .onClick(() => {
+      this.onTap();
+    })
+  }
+}
+
+@Component
+export struct BottomItem {
+  mark: string = '';
+  title: string = '';
+  onTap: () => void = () => {
+  };
+
+  build() {
+    Column() {
+      Text(this.mark)
+        .fontSize(16)
+        .fontWeight(FontWeight.Medium)
+        .fontColor('#1F6B4A')
+      Text(this.title)
+        .fontSize(11)
+        .fontColor('#1C1B19')
+        .margin({ top: 2 })
+    }
+    .layoutWeight(1)
+    .height(56)
+    .justifyContent(FlexAlign.Center)
     .onClick(() => {
       this.onTap();
     })
