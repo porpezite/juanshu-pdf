@@ -1,0 +1,44 @@
+{
+  "color": [
+    {
+      "name": "start_window_background",
+      "value": "#FFFFFF"
+    },
+    {
+      "name": "page_background",
+      "value": "#F6F4EF"
+    },
+    {
+      "name": "brand",
+      "value": "#1F6B4A"
+    },
+    {
+      "name": "ink",
+      "value": "#1C1B19"
+    },
+    {
+      "name": "icon_color_highlight",
+      "value": "#0A59F7"
+    },
+    {
+      "name": "icon_color_level2",
+      "value": "#99182431"
+    },
+    {
+      "name": "fontColor_text3",
+      "value": "#182431"
+    },
+    {
+      "name": "news_time_fontColor",
+      "value": "#99182431"
+    },
+    {
+      "name": "list_background",
+      "value": "#F1F3F5"
+    },
+    {
+      "name": "tab_indicator",
+      "value": "#DC6450"
+    }
+  ]
+}
