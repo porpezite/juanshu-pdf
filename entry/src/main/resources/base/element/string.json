@@ -1,0 +1,28 @@
+{
+  "string": [
+    {
+      "name": "module_desc",
+      "value": "卷舒 PDF 入口"
+    },
+    {
+      "name": "EntryAbility_desc",
+      "value": "扫描、编辑、转换与整理 PDF"
+    },
+    {
+      "name": "EntryAbility_label",
+      "value": "卷舒 PDF"
+    },
+    {
+      "name": "camera_reason",
+      "value": "用于拍摄文档并生成扫描件"
+    },
+    {
+      "name": "font_size_12",
+      "value": "12fp"
+    },
+    {
+      "name": "margin_xs",
+      "value": "4vp"
+    }
+  ]
+}

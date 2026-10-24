@@ -1,0 +1,15 @@
+export { utf8Encode, utf8Decode, utf16beHex } from './src/main/ets/model/Utf8';
+export { RgbaImage, Point, Quad, cloneImage, fillRect, fillQuad, downscale, downscaleMax, rotateImage, colorChannel } from './src/main/ets/model/Image';
+export { AnnKind, ScanFilter, DocKind, Annotation, PdfPageModel, PdfDocumentModel, DocSummary, OcrBlock, OcrResult } from './src/main/ets/model/Document';
+export { cloneAnnotation, clonePage, cloneDoc, pagePointsForImage } from './src/main/ets/model/Document';
+export { detectDocumentQuad, insetQuad } from './src/main/ets/scan/EdgeDetect';
+export { warpPerspective } from './src/main/ets/scan/Perspective';
+export { applyFilter } from './src/main/ets/scan/Filters';
+export { sampleDocumentImage, sampleQuad } from './src/main/ets/scan/Sample';
+export { rasterizeStroke } from './src/main/ets/scan/Ink';
+export { encodePng } from './src/main/ets/image/Png';
+export { renderPage } from './src/main/ets/pdf/Render';
+export { encodePdf, decodePdf, isJuanshuPdf, exportPlainText, wrapUnits } from './src/main/ets/pdf/PdfCodec';
+export { createImageDocument, createTextDocument, mergeDocuments, splitDocument, deletePageIndexes, reorderPages, rotatePage, compressDocument, CompressSettings, movePage, identityOrder } from './src/main/ets/pdf/Ops';
+export { sanitizeFileName, ensurePdfExtension, searchRecords, recentRecords, encodeLibraryIndex, decodeLibraryIndex, layoutReadingOrder, parsePageRanges, nextDocId } from './src/main/ets/library/Query';
+export { FilePort, NativePdfPort, OcrPort, CapturePort } from './src/main/ets/ports/Ports';

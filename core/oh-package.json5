@@ -1,0 +1,9 @@
+{
+  "name": "juanshu_core",
+  "version": "1.0.0",
+  "description": "卷舒 PDF 可移植核心：扫描几何、PDF 编解码、页面操作",
+  "main": "Index.ets",
+  "author": "",
+  "license": "Apache-2.0",
+  "dependencies": {}
+}
