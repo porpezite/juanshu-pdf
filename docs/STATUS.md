@@ -4,7 +4,8 @@
 
 - HarmonyOS NEXT Stage 工程：`AppScope`、`entry` HAP、`core` HAR、hvigor、`module.json5`、中文应用名「卷舒 PDF」。
 - 四个模块还在：文档、工具、扫描、我的。扫描、编辑、转换和整理的原有页面仍可从工具进入。
-- 壳层改为 UI Design Kit：`HdsNavigation` 加悬浮 `HdsTabs`（文档、工具、扫描、我的，玻璃底栏，中间凸起扫描按钮）。窗口全屏布局。文档页仍是新闻列表样式。扫描入口推入全屏 `DocumentScanner`，不盖标题栏。
+- 壳层改为 UI Design Kit：`HdsNavigation` 加悬浮 `HdsTabs`（文档、工具、扫描、我的，玻璃底栏，中间凸起扫描按钮）。窗口全屏布局，壳层仍 `ignoreLayoutSafeArea` 系统上下边，底栏保持玻璃悬浮。文档页仍是新闻列表样式。扫描入口推入全屏 `DocumentScanner`，不盖标题栏。
+- 一级标签页的大标题（文档、工具的 `pageTitle`，以及我的页横幅）用窗口避让区下移：页面显示后读取 `TYPE_SYSTEM` 与 `TYPE_CUTOUT` 的 `topRect`，`TYPE_NAVIGATION_INDICATOR` 的 `bottomRect`，经 `px2vp` 换算，并订阅 `avoidAreaChange`。不再使用启动时可能为 0 的 `AppStorage` 状态栏高度，也不写死 44vp。
 - 二级页 `ManagePage`、`ConvertPage`、`EditPage` 是 `HdsNavDestination`。凡是显示标题栏的页面都设置 `avoidLayoutSafeArea: true` 和 `enableComponentSafeArea: true`，标题避开状态栏，内容避开标题栏。打开文档仍是 PDF Kit `PdfView`，返回用标题栏自带返回，不再叠自绘返回按钮。`Chrome.ets` 里的自定义 `TitleBar` 已没有页面使用。`ScanPage` 隐藏标题栏，因为整页就是官方扫描控件。
 - 产品说明在 `docs/PRODUCT.md`：相对夸克扫描王和扫描全能王的取舍、P0/P1、Free/Plus/Pro 与加油包规则、五个差异点、多端顺序。会员和分布式尚未做成功能。
 - 可移植核心，且不引用鸿蒙套件：

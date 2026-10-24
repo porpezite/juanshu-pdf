@@ -1,3 +1,5 @@
+import { common } from '@kit.AbilityKit';
+import { window } from '@kit.ArkUI';
 import { fileUri } from '@kit.CoreFileKit';
 import { uniformTypeDescriptor as utd } from '@kit.ArkData';
 import { systemShare } from '@kit.ShareKit';
@@ -134,17 +136,20 @@ struct Index {
   @State showSearch: boolean = false;
   @State query: string = '';
   @State docs: DocSummary[] = [];
-  @StorageProp('statusBarHeight') statusBarHeight: number = 0;
-  @StorageProp('navIndicatorHeight') navIndicatorHeight: number = 0;
+  @State topInset: number = 0;
+  @State bottomInset: number = 0;
   private navStack: NavPathStack = new NavPathStack();
   private tabsController: HdsTabsController = new HdsTabsController();
+  private hostWindow: window.Window | null = null;
 
   aboutToAppear(): void {
     this.reloadDocs();
+    this.bindAvoidArea();
   }
 
   onPageShow(): void {
     this.reloadDocs();
+    this.readAvoidArea();
   }
 
   @Builder
@@ -179,7 +184,7 @@ struct Index {
     .backgroundColor(Color.White)
     .border({ width: 3, color: $r('app.color.icon_color_highlight') })
     .shadow({ radius: 12, color: '#330A59F7', offsetY: 4 })
-    .margin({ bottom: this.navIndicatorHeight + 18 })
+    .margin({ bottom: this.bottomInset + 18 })
     .onClick(() => {
       this.openScan();
     })
@@ -226,7 +231,7 @@ struct Index {
         .width('100%')
         .height('100%')
         .barFloatingStyle({
-          barBottomMargin: this.navIndicatorHeight + 12,
+          barBottomMargin: this.bottomInset + 12,
           gradientMask: { maskColor: '#66F1F3F5', maskHeight: 92 },
           systemMaterialEffect: {
             materialType: hdsMaterial.MaterialType.IMMERSIVE,
@@ -323,7 +328,7 @@ struct Index {
     }
     .width('100%')
     .alignItems(VerticalAlign.Center)
-    .padding({ left: 16, right: 16, top: this.statusBarHeight + 8, bottom: 4 })
+    .padding({ left: 16, right: 16, top: this.topInset + 8, bottom: 4 })
   }
 
   @Builder
@@ -552,7 +557,7 @@ struct Index {
         Stack({ alignContent: Alignment.BottomStart }) {
           Image($r('app.media.banner_mine'))
             .width('100%')
-            .height(188 + this.statusBarHeight)
+            .height(188 + this.topInset)
             .objectFit(ImageFit.Cover)
           Row() {
             Text('我的')
@@ -569,10 +574,10 @@ struct Index {
               })
           }
           .width('100%')
-          .padding({ left: 16, right: 16, bottom: 16, top: this.statusBarHeight + 8 })
+          .padding({ left: 16, right: 16, bottom: 16, top: this.topInset + 8 })
         }
         .width('100%')
-        .height(188 + this.statusBarHeight)
+        .height(188 + this.topInset)
 
         Scroll() {
           Row() {
@@ -677,8 +682,52 @@ struct Index {
     this.showSearch = !this.showSearch;
   }
 
+  private bindAvoidArea(): void {
+    const host = this.getUIContext().getHostContext() as common.UIAbilityContext;
+    if (host === undefined || host === null) {
+      return;
+    }
+    window.getLastWindow(host).then((win: window.Window) => {
+      this.hostWindow = win;
+      this.readAvoidArea();
+      win.on('avoidAreaChange', (data: window.AvoidAreaOptions) => {
+        this.consumeAvoid(data.type, data.area);
+      });
+      // The first read can still be 0 if layout has not published the inset yet.
+      setTimeout(() => {
+        this.readAvoidArea();
+      }, 300);
+    });
+  }
+
+  private readAvoidArea(): void {
+    if (this.hostWindow === null) {
+      return;
+    }
+    this.consumeAvoid(window.AvoidAreaType.TYPE_SYSTEM,
+      this.hostWindow.getWindowAvoidArea(window.AvoidAreaType.TYPE_SYSTEM));
+    this.consumeAvoid(window.AvoidAreaType.TYPE_CUTOUT,
+      this.hostWindow.getWindowAvoidArea(window.AvoidAreaType.TYPE_CUTOUT));
+    this.consumeAvoid(window.AvoidAreaType.TYPE_NAVIGATION_INDICATOR,
+      this.hostWindow.getWindowAvoidArea(window.AvoidAreaType.TYPE_NAVIGATION_INDICATOR));
+  }
+
+  private consumeAvoid(type: window.AvoidAreaType, area: window.AvoidArea): void {
+    if (type === window.AvoidAreaType.TYPE_NAVIGATION_INDICATOR) {
+      const nextBottom = this.getUIContext().px2vp(area.bottomRect.height);
+      if (nextBottom > this.bottomInset) {
+        this.bottomInset = nextBottom;
+      }
+      return;
+    }
+    const next = this.getUIContext().px2vp(area.topRect.height);
+    if (next > this.topInset) {
+      this.topInset = next;
+    }
+  }
+
   private dockInset(): number {
-    return 108 + this.navIndicatorHeight;
+    return 108 + this.bottomInset;
   }
 
   private openTab(index: number): void {
