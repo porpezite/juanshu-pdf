@@ -1,9 +1,5 @@
 {
   "src": [
-    "pages/Index",
-    "pages/ScanPage",
-    "pages/EditPage",
-    "pages/ConvertPage",
-    "pages/ManagePage"
+    "pages/Index"
   ]
 }

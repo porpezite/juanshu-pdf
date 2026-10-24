@@ -1,6 +1,6 @@
 import { AbilityConstant, UIAbility, Want } from '@kit.AbilityKit';
 import { hilog } from '@kit.PerformanceAnalysisKit';
-import { window } from '@kit.ArkUI';
+import { display, window } from '@kit.ArkUI';
 import { AppHost } from '../platform/AppHost';
 
 const DOMAIN = 0xA710;
@@ -14,19 +14,44 @@ export default class EntryAbility extends UIAbility {
   }
 
   onWindowStageCreate(windowStage: window.WindowStage): void {
-    try {
-      windowStage.getMainWindow().then((win: window.Window) => {
-        win.setWindowBackgroundColor('#FFFFFF');
+    windowStage.getMainWindow().then((win: window.Window) => {
+      win.setWindowBackgroundColor('#FFFFFF');
+      win.setWindowLayoutFullScreen(true).then(() => {
         win.setWindowSystemBarProperties({
-          statusBarColor: '#FFFFFF',
+          statusBarColor: '#00000000',
           statusBarContentColor: '#182431',
-          navigationBarColor: '#FFFFFF',
+          navigationBarColor: '#00000000',
           navigationBarContentColor: '#182431'
         });
+        this.publishAvoidArea(win);
+        this.loadIndex(windowStage);
+      }).catch(() => {
+        hilog.error(DOMAIN, TAG, 'fullscreen layout failed');
+        this.loadIndex(windowStage);
       });
-    } catch (err) {
+    }).catch(() => {
       hilog.error(DOMAIN, TAG, 'window style failed');
+      this.loadIndex(windowStage);
+    });
+  }
+
+  private publishAvoidArea(win: window.Window): void {
+    let density = 1;
+    try {
+      const pixels = display.getDefaultDisplaySync().densityPixels;
+      if (pixels > 0) {
+        density = pixels;
+      }
+    } catch (err) {
+      density = 1;
     }
+    const top = win.getWindowAvoidArea(window.AvoidAreaType.TYPE_SYSTEM).topRect.height / density;
+    const bottom = win.getWindowAvoidArea(window.AvoidAreaType.TYPE_NAVIGATION_INDICATOR).bottomRect.height / density;
+    AppStorage.setOrCreate('statusBarHeight', top);
+    AppStorage.setOrCreate('navIndicatorHeight', bottom);
+  }
+
+  private loadIndex(windowStage: window.WindowStage): void {
     windowStage.loadContent('pages/Index', (err) => {
       if (err.code) {
         hilog.error(DOMAIN, TAG, 'load Index failed code=%{public}d', err.code);

@@ -1,0 +1,36 @@
+{
+  "routerMap": [
+    {
+      "name": "ScanPage",
+      "pageSourceFile": "src/main/ets/pages/ScanPage.ets",
+      "buildFunction": "ScanPageBuilder",
+      "data": {
+        "description": "文档扫描"
+      }
+    },
+    {
+      "name": "EditPage",
+      "pageSourceFile": "src/main/ets/pages/EditPage.ets",
+      "buildFunction": "EditPageBuilder",
+      "data": {
+        "description": "打开 PDF"
+      }
+    },
+    {
+      "name": "ConvertPage",
+      "pageSourceFile": "src/main/ets/pages/ConvertPage.ets",
+      "buildFunction": "ConvertPageBuilder",
+      "data": {
+        "description": "提取文字与转换"
+      }
+    },
+    {
+      "name": "ManagePage",
+      "pageSourceFile": "src/main/ets/pages/ManagePage.ets",
+      "buildFunction": "ManagePageBuilder",
+      "data": {
+        "description": "合并拆分压缩页序"
+      }
+    }
+  ]
+}

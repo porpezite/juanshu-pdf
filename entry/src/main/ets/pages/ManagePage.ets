@@ -1,13 +1,9 @@
+import { HdsNavDestination } from '@kit.UIDesignKit';
 import { DocSummary, identityOrder } from 'juanshu_core';
-import { TitleBar, stampName, toast } from '../components/Chrome';
+import { EditRoute, ManageRoute } from '../common/NavRoutes';
+import { stampName, toast } from '../components/Chrome';
 import { AppHost } from '../platform/AppHost';
-import { router } from '@kit.ArkUI';
 
-class ManageRoute {
-  tool: string = '';
-}
-
-@Entry
 @Component
 struct ManagePage {
   @State query: string = '';
@@ -18,25 +14,11 @@ struct ManagePage {
   @State ranges: string = '1-1';
   @State rename: string = '';
   @State tool: string = '';
-
-  aboutToAppear(): void {
-    const params = router.getParams();
-    if (params !== undefined && params !== null) {
-      const route = params as ManageRoute;
-      if (route.tool !== undefined) {
-        this.tool = route.tool;
-      }
-    }
-    this.reload();
-  }
-
-  onPageShow(): void {
-    this.reload();
-  }
+  private stack: NavPathStack | null = null;
 
   build() {
-    Column() {
-      TitleBar({ title: this.toolTitle() })
+    HdsNavDestination() {
+      Column() {
       Scroll() {
         Column() {
           TextInput({ text: this.query, placeholder: '搜索文件名' })
@@ -100,9 +82,24 @@ struct ManagePage {
       .layoutWeight(1)
       .scrollBar(BarState.Off)
     }
-    .width('100%')
-    .height('100%')
+      .width('100%')
+      .height('100%')
+      .backgroundColor('#F6F4EF')
+    }
+    .titleBar({
+      avoidLayoutSafeArea: true,
+      enableComponentSafeArea: true,
+      content: { title: { mainTitle: this.toolTitle() } }
+    })
     .backgroundColor('#F6F4EF')
+    .onReady((ctx: NavDestinationContext) => {
+      this.stack = ctx.pathStack;
+      this.applyRoute(ctx.pathInfo.param);
+      this.reload();
+    })
+    .onShown(() => {
+      this.reload();
+    })
   }
 
   @Builder
@@ -133,7 +130,7 @@ struct ManagePage {
         .layoutWeight(1)
         .margin({ left: 10 })
         .onClick(() => {
-          router.pushUrl({ url: 'pages/EditPage', params: { docId: item.id } });
+          this.openDoc(item.id);
         })
       }
       .width('100%')
@@ -290,6 +287,22 @@ struct ManagePage {
     .alignItems(HorizontalAlign.Start)
   }
 
+  private applyRoute(param: Object): void {
+    if (param === undefined || param === null) {
+      return;
+    }
+    const route = param as ManageRoute;
+    if (route.tool !== undefined && route.tool.length > 0) {
+      this.tool = route.tool;
+    }
+  }
+
+  private openDoc(id: string): void {
+    if (this.stack !== null) {
+      this.stack.pushPathByName('EditPage', new EditRoute(id));
+    }
+  }
+
   private toolTitle(): string {
     if (this.tool === 'merge') {
       return '合并';
@@ -394,5 +407,12 @@ struct ManagePage {
     }
     toast('已导入 ' + saved.name);
     this.reload();
+  }
+}
+
+@Builder
+export function ManagePageBuilder(name: string, param: Object) {
+  if (name.length >= 0 && param !== undefined) {
+    ManagePage()
   }
 }

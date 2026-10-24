@@ -4,7 +4,8 @@
 
 - HarmonyOS NEXT Stage 工程：`AppScope`、`entry` HAP、`core` HAR、hvigor、`module.json5`、中文应用名「卷舒 PDF」。
 - 四个模块还在：文档、工具、扫描、我的。扫描、编辑、转换和整理的原有页面仍可从工具进入。
-- 壳层按新闻模板 `MainEntry`：`Navigation` 包住底部 `Tabs`（文档、工具、扫描、我的），标签是 24×24 图标加 12fp 文字，选中色 `#0A59F7`。文档页是 24fp 粗标题、搜索图标，以及 `#DC6450` 下划线的「最近 / 文件夹」。列表在 `#F1F3F5` 上，白卡片、标题在左、圆角缩略图在右。我的页是横幅、横向入口和卡片。扫描页只有官方 `DocumentScanner`。打开文档只有 PDF Kit `PdfView`。大屏用新闻模板的 `BreakpointConstants` 和 `GridRow`。
+- 壳层改为 UI Design Kit：`HdsNavigation` 加悬浮 `HdsTabs`（文档、工具、扫描、我的，玻璃底栏，中间凸起扫描按钮）。窗口全屏布局。文档页仍是新闻列表样式。扫描入口推入全屏 `DocumentScanner`，不盖标题栏。
+- 二级页 `ManagePage`、`ConvertPage`、`EditPage` 是 `HdsNavDestination`。凡是显示标题栏的页面都设置 `avoidLayoutSafeArea: true` 和 `enableComponentSafeArea: true`，标题避开状态栏，内容避开标题栏。打开文档仍是 PDF Kit `PdfView`，返回用标题栏自带返回，不再叠自绘返回按钮。`Chrome.ets` 里的自定义 `TitleBar` 已没有页面使用。`ScanPage` 隐藏标题栏，因为整页就是官方扫描控件。
 - 产品说明在 `docs/PRODUCT.md`：相对夸克扫描王和扫描全能王的取舍、P0/P1、Free/Plus/Pro 与加油包规则、五个差异点、多端顺序。会员和分布式尚未做成功能。
 - 可移植核心，且不引用鸿蒙套件：
   - 文档找边、四角校正、灰度 / 黑白 / 色彩增强

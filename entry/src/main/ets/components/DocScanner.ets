@@ -21,6 +21,8 @@ export struct DocScanner {
   @State docImageUris: string[] = [];
   onSaved: () => void = () => {
   };
+  onClosed: () => void = () => {
+  };
   private docScanConfig: DocumentScannerConfig = new DocumentScannerConfig();
 
   aboutToAppear(): void {
@@ -44,6 +46,10 @@ export struct DocScanner {
             hilog.info(0x0001, TAG, `uri: ${uriString}`);
           });
           this.docImageUris = uris;
+          if (uris.length === 0) {
+            this.onClosed();
+            return;
+          }
           this.keep(uris, saveType);
         }
       })

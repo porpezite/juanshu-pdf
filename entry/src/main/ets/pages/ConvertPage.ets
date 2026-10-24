@@ -1,14 +1,9 @@
-import { router } from '@kit.ArkUI';
+import { HdsNavDestination } from '@kit.UIDesignKit';
 import { DocSummary } from 'juanshu_core';
-import { TitleBar, stampName, toast } from '../components/Chrome';
+import { ConvertRoute } from '../common/NavRoutes';
+import { stampName, toast } from '../components/Chrome';
 import { AppHost } from '../platform/AppHost';
 
-class ConvertRoute {
-  docId: string = '';
-  tool: string = '';
-}
-
-@Entry
 @Component
 struct ConvertPage {
   @State docId: string = '';
@@ -21,23 +16,9 @@ struct ConvertPage {
   @State busy: boolean = false;
   @State tool: string = '';
 
-  aboutToAppear(): void {
-    const params = router.getParams();
-    if (params !== undefined && params !== null) {
-      const route = params as ConvertRoute;
-      if (route.docId !== undefined && route.docId.length > 0) {
-        this.docId = route.docId;
-      }
-      if (route.tool !== undefined) {
-        this.tool = route.tool;
-      }
-    }
-    this.reload();
-  }
-
   build() {
-    Column() {
-      TitleBar({ title: this.pageTitle() })
+    HdsNavDestination() {
+      Column() {
       Scroll() {
         Column() {
           Text(this.title)
@@ -152,9 +133,20 @@ struct ConvertPage {
       .layoutWeight(1)
       .scrollBar(BarState.Off)
     }
-    .width('100%')
-    .height('100%')
+      .width('100%')
+      .height('100%')
+      .backgroundColor('#F6F4EF')
+    }
+    .titleBar({
+      avoidLayoutSafeArea: true,
+      enableComponentSafeArea: true,
+      content: { title: { mainTitle: this.pageTitle() } }
+    })
     .backgroundColor('#F6F4EF')
+    .onReady((ctx: NavDestinationContext) => {
+      this.applyRoute(ctx.pathInfo.param);
+      this.reload();
+    })
   }
 
   @Builder
@@ -181,6 +173,16 @@ struct ConvertPage {
     .scrollable(ScrollDirection.Horizontal)
     .scrollBar(BarState.Off)
     .width('100%')
+  }
+
+  private applyRoute(param: Object): void {
+    if (param === undefined || param === null) {
+      return;
+    }
+    const route = param as ConvertRoute;
+    if (route.tool !== undefined && route.tool.length > 0) {
+      this.tool = route.tool;
+    }
   }
 
   private pageTitle(): string {
@@ -296,5 +298,12 @@ struct ConvertPage {
     toast('已生成 ' + saved.name);
     this.draft = '';
     this.reload();
+  }
+}
+
+@Builder
+export function ConvertPageBuilder(name: string, param: Object) {
+  if (name.length >= 0 && param !== undefined) {
+    ConvertPage()
   }
 }

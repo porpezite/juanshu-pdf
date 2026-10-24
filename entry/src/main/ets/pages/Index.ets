@@ -1,10 +1,10 @@
-import { router } from '@kit.ArkUI';
 import { fileUri } from '@kit.CoreFileKit';
 import { uniformTypeDescriptor as utd } from '@kit.ArkData';
 import { systemShare } from '@kit.ShareKit';
+import { HdsNavigation, HdsTabs, HdsTabsController, hdsMaterial } from '@kit.UIDesignKit';
 import { DocSummary } from 'juanshu_core';
 import { BreakpointConstants } from '../common/BreakpointConstants';
-import { DocScanner } from '../components/DocScanner';
+import { ConvertRoute, EditRoute, ManageRoute, ScanRoute } from '../common/NavRoutes';
 import { toast } from '../components/Chrome';
 import { AppHost } from '../platform/AppHost';
 
@@ -134,8 +134,10 @@ struct Index {
   @State showSearch: boolean = false;
   @State query: string = '';
   @State docs: DocSummary[] = [];
+  @StorageProp('statusBarHeight') statusBarHeight: number = 0;
+  @StorageProp('navIndicatorHeight') navIndicatorHeight: number = 0;
   private navStack: NavPathStack = new NavPathStack();
-  private tabsController: TabsController = new TabsController();
+  private tabsController: HdsTabsController = new HdsTabsController();
 
   aboutToAppear(): void {
     this.reloadDocs();
@@ -146,7 +148,7 @@ struct Index {
   }
 
   @Builder
-  tabBarBuilder(title: string, index: number, selectedImg: ResourceStr, normalImg: ResourceStr) {
+  tabBarBuilder(title: string, index: number, selectedImg: ResourceStr, normalImg: ResourceStr, shift: number) {
     Column() {
       Image(this.currentIndex === index ? selectedImg : normalImg)
         .width(24)
@@ -160,68 +162,99 @@ struct Index {
     .width('100%')
     .height('100%')
     .justifyContent(FlexAlign.Center)
+    .margin({ left: shift })
+  }
+
+  @Builder
+  scanFab() {
+    Column() {
+      Image($r('app.media.ic_scan_selected'))
+        .width(28)
+        .height(28)
+    }
+    .width(60)
+    .height(60)
+    .borderRadius(30)
+    .justifyContent(FlexAlign.Center)
+    .backgroundColor(Color.White)
+    .border({ width: 3, color: $r('app.color.icon_color_highlight') })
+    .shadow({ radius: 12, color: '#330A59F7', offsetY: 4 })
+    .margin({ bottom: this.navIndicatorHeight + 18 })
+    .onClick(() => {
+      this.openScan();
+    })
   }
 
   build() {
-    Navigation(this.navStack) {
-      Column() {
-        Tabs({ barPosition: BarPosition.End, controller: this.tabsController, index: this.currentIndex }) {
+    HdsNavigation(this.navStack) {
+      Stack({ alignContent: Alignment.Bottom }) {
+        HdsTabs({ controller: this.tabsController, index: this.currentIndex }) {
           TabContent() {
             if (this.currentIndex === 0) {
               this.docsPage()
             }
           }
-          .tabBar(this.tabBarBuilder('文档', 0, $r('app.media.ic_doc_selected'), $r('app.media.ic_doc')))
+          .tabBar(this.tabBarBuilder('文档', 0, $r('app.media.ic_doc_selected'), $r('app.media.ic_doc'), -16))
 
           TabContent() {
             if (this.currentIndex === 1) {
               this.toolsPage()
             }
           }
-          .tabBar(this.tabBarBuilder('工具', 1, $r('app.media.ic_tool_selected'), $r('app.media.ic_tool')))
+          .tabBar(this.tabBarBuilder('工具', 1, $r('app.media.ic_tool_selected'), $r('app.media.ic_tool'), -36))
 
           TabContent() {
-            if (this.currentIndex === 2) {
-              DocScanner({
-                onSaved: () => {
-                  this.reloadDocs();
-                  this.openTab(0);
-                }
-              })
-                .width('100%')
-                .height('100%')
-            }
+            Column()
+              .width('100%')
+              .height('100%')
+              .backgroundColor(Color.White)
           }
-          .tabBar(this.tabBarBuilder('扫描', 2, $r('app.media.ic_scan_selected'), $r('app.media.ic_scan')))
+          .tabBar(this.tabBarBuilder('扫描', 2, $r('app.media.ic_scan_selected'), $r('app.media.ic_scan'), 36))
 
           TabContent() {
             if (this.currentIndex === 3) {
               this.minePage()
             }
           }
-          .expandSafeArea([SafeAreaType.SYSTEM], [SafeAreaEdge.TOP])
-          .tabBar(this.tabBarBuilder('我的', 3, $r('app.media.ic_mine_selected'), $r('app.media.ic_mine')))
+          .tabBar(this.tabBarBuilder('我的', 3, $r('app.media.ic_mine_selected'), $r('app.media.ic_mine'), 16))
         }
         .scrollable(false)
-        .height('100%')
-        .barHeight(56)
+        .barOverlap(true)
+        .vertical(false)
+        .barPosition(BarPosition.End)
         .animationDuration(0)
-        .barMode(BarMode.Fixed)
-        .expandSafeArea([SafeAreaType.SYSTEM], [SafeAreaEdge.TOP])
+        .width('100%')
+        .height('100%')
+        .barFloatingStyle({
+          barBottomMargin: this.navIndicatorHeight + 12,
+          gradientMask: { maskColor: '#66F1F3F5', maskHeight: 92 },
+          systemMaterialEffect: {
+            materialType: hdsMaterial.MaterialType.IMMERSIVE,
+            materialLevel: hdsMaterial.MaterialLevel.ADAPTIVE
+          }
+        })
         .onChange((index: number) => {
+          if (index === 2) {
+            this.openScan();
+            this.tabsController.changeIndex(this.currentIndex);
+            return;
+          }
           this.currentIndex = index;
         })
+
+        this.scanFab()
       }
       .width('100%')
       .height('100%')
-      .backgroundColor(Color.White)
     }
     .hideTitleBar(true)
     .hideToolBar(true)
     .hideBackButton(true)
     .mode(NavigationMode.Stack)
+    .ignoreLayoutSafeArea([LayoutSafeAreaType.SYSTEM], [LayoutSafeAreaEdge.TOP, LayoutSafeAreaEdge.BOTTOM])
     .width('100%')
     .height('100%')
+    .backgroundColor(Color.White)
   }
 
   @Builder
@@ -290,7 +323,7 @@ struct Index {
     }
     .width('100%')
     .alignItems(VerticalAlign.Center)
-    .padding({ left: 16, right: 16, top: 8, bottom: 4 })
+    .padding({ left: 16, right: 16, top: this.statusBarHeight + 8, bottom: 4 })
   }
 
   @Builder
@@ -354,7 +387,7 @@ struct Index {
       }
       .width('100%')
       .height('100%')
-      .padding({ left: 16, right: 16, bottom: 12 })
+      .padding({ left: 16, right: 16, bottom: this.dockInset() })
       .scrollBar(BarState.Off)
     }
   }
@@ -376,7 +409,7 @@ struct Index {
     }
     .width('100%')
     .height('100%')
-    .padding({ left: 16, right: 16, bottom: 12 })
+    .padding({ left: 16, right: 16, bottom: this.dockInset() })
     .scrollBar(BarState.Off)
   }
 
@@ -475,7 +508,7 @@ struct Index {
         }
         .layoutWeight(1)
         .width('100%')
-        .padding({ left: 16, right: 16, bottom: 12 })
+        .padding({ left: 16, right: 16, bottom: this.dockInset() })
         .backgroundColor($r('app.color.list_background'))
         .scrollBar(BarState.Off)
       }
@@ -519,7 +552,7 @@ struct Index {
         Stack({ alignContent: Alignment.BottomStart }) {
           Image($r('app.media.banner_mine'))
             .width('100%')
-            .height(188)
+            .height(188 + this.statusBarHeight)
             .objectFit(ImageFit.Cover)
           Row() {
             Text('我的')
@@ -536,10 +569,10 @@ struct Index {
               })
           }
           .width('100%')
-          .padding({ left: 16, right: 16, bottom: 16 })
+          .padding({ left: 16, right: 16, bottom: 16, top: this.statusBarHeight + 8 })
         }
         .width('100%')
-        .height(188)
+        .height(188 + this.statusBarHeight)
 
         Scroll() {
           Row() {
@@ -626,7 +659,7 @@ struct Index {
         .width('100%')
         .layoutWeight(1)
         .alignItems(HorizontalAlign.Start)
-        .padding({ left: 16, right: 16 })
+        .padding({ left: 16, right: 16, bottom: this.dockInset() })
         .backgroundColor($r('app.color.list_background'))
       }
       .width('100%')
@@ -644,9 +677,25 @@ struct Index {
     this.showSearch = !this.showSearch;
   }
 
+  private dockInset(): number {
+    return 108 + this.navIndicatorHeight;
+  }
+
   private openTab(index: number): void {
+    if (index === 2) {
+      this.openScan();
+      return;
+    }
     this.currentIndex = index;
     this.tabsController.changeIndex(index);
+  }
+
+  private openScan(): void {
+    this.navStack.pushPathByName('ScanPage', new ScanRoute(), (popInfo: PopInfo) => {
+      if (popInfo !== undefined) {
+        this.reloadDocs();
+      }
+    });
   }
 
   private visibleFolders(): string[] {
@@ -682,15 +731,15 @@ struct Index {
   }
 
   private openDoc(id: string): void {
-    router.pushUrl({ url: 'pages/EditPage', params: { docId: id } });
+    this.navStack.pushPathByName('EditPage', new EditRoute(id));
   }
 
   private openConvert(tool: string): void {
-    router.pushUrl({ url: 'pages/ConvertPage', params: { tool: tool } });
+    this.navStack.pushPathByName('ConvertPage', new ConvertRoute(tool));
   }
 
   private openManage(tool: string): void {
-    router.pushUrl({ url: 'pages/ManagePage', params: { tool: tool } });
+    this.navStack.pushPathByName('ManagePage', new ManageRoute(tool));
   }
 
   private async shareRecent(): Promise<void> {
